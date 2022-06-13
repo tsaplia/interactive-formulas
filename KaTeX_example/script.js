@@ -16,7 +16,7 @@ renderButton.addEventListener("click", () => {
             statusField.innerText = structure;
             elem.style.borderStyle = "solid";
             
-            event.stopPropagation();
+            //event.stopPropagation();
         });
         elem.addEventListener("mouseout", ()=>{
             elem.style.borderStyle = "none";
