@@ -75,8 +75,21 @@ HTMLElement.prototype.wrap = function (className) {
 }
 
 
+
+
 function Block(content) {
     this.content = content // arrey of terms
+
+    this.toTex = function(){
+        let str = ''; 
+        for(let ind in this.content){
+            if(ind != 0 || this.content[ind].sign != "+") 
+                str += this.content[ind].sign;
+            
+            str += content[ind].toTex();
+        }
+        return str;
+    }
 }
 
 Block.fromHTML = function (elem) {
@@ -93,10 +106,27 @@ Block.fromHTML = function (elem) {
     return new Block(content);
 }
 
+
 function Term(content, sign = "+") {
     this.sign = sign; //plus(+) or minus(-)
     this.content = content; // array of structures like Var, Funk, Frac...
 
+    this.toTex = function(){
+        let str = '';
+        for(let ind in this.content){
+            if(ind > 0 && typeof this.content[ind] === "number") 
+                str += '\\cdot ';
+            
+            if(typeof this.content[ind] === "number")
+                str += this.content[ind];
+            else if(this.content[ind] instanceof Block)
+                str += `\\left(${this.content[ind].toTex()}\\right)`;
+            else
+                str += this.content[ind].toTex();
+    
+        }
+        return str;
+    }
 }
 
 Term.fromHTML = function (first, last) {
@@ -113,28 +143,35 @@ Term.fromHTML = function (first, last) {
             continue;
         }
 
+        let item;
+
         if (first.classList.contains(classNames.variable) || first.tagName === "VAR")
-            content.push(Var.fromHTML(first));
+            item = Var.fromHTML(first);
         
         else if (first.classList.contains(classNames.number))
-            content.push(Number(first.innerText));
+           item = Number(first.innerText);
 
         else if (first.classList.contains(classNames.fraction))
-            content.push(Frac.fromHTML(first));
+            item = Frac.fromHTML(first);
 
         else if (first.classList.contains(classNames.function))
-            content.push(Func.fromHTML(first));
+            item = Func.fromHTML(first);
 
         else if (first.firstChild.classList.contains(classNames.paren))
-            content.push(Block.fromHTML(first.firstChild.nextElementSibling));
+            item = Block.fromHTML(first.firstChild.nextElementSibling);
 
         else if (first.lastChild.classList.contains(classNames.sqrtContent) || 
                     first.firstChild.classList.contains(classNames.sqrtBase))
-            content.push(Sqrt.fromHTML(first));
+            item = Sqrt.fromHTML(first);
 
         else if (first.lastChild.classList.contains(classNames.indices))
-            content.push(SupSub.fromHTML(first))
+            item = SupSub.fromHTML(first);
+        
+        else throw "Unknown structure"
 
+        item.HTMLElement = first;
+        content.push(item);
+            
         if (first === last) break;
         first = first.nextElementSibling;
     }
@@ -144,6 +181,10 @@ Term.fromHTML = function (first, last) {
 function Frac(numerator, denomerator) {
     this.numerator = numerator; //[block]
     this.denomerator = denomerator; //[block]
+
+    this.toTex = function(){
+        return `\\frac{${this.numerator.toTex()}}{${this.denomerator.toTex()}}`;
+    }
 }
 
 Frac.fromHTML = function (elem) {
@@ -154,6 +195,10 @@ Frac.fromHTML = function (elem) {
 function Sqrt(content, root = 2) {
     this.root = root; //[number]
     this.content = content; //[block]
+    
+    this.toTex = function(){
+        return `\\sqrt${ this.root !== 2? `[${this.root.toTex()}]`:"" }{${this.content.toTex()}}`
+    }
 }
 
 Sqrt.fromHTML = function (elem) {
@@ -171,29 +216,53 @@ function SupSub(base, upperIndex = null, lowerIndex = null) {
     this.base = base;
     this.upperIndex = upperIndex;
     this.lowerIndex = lowerIndex;
+
+    this.toTex = function(){
+        let str = typeof this.base === "number" ? this.base+" ": this.base.toTex();
+        if(this.lowerIndex){
+            if(this.lowerIndex.toTex().length == 1)
+                str += `_${this.lowerIndex.toTex()}`;      
+            else
+                str += `_{${this.lowerIndex.toTex()}}`;
+        }
+        if(this.upperIndex){
+            if(this.upperIndex.toTex().length == 1)
+                str += `^${this.upperIndex.toTex()}`;      
+            else
+                str += `^{${this.upperIndex.toTex()}}`;
+        }
+        return str;
+    }    
 }
 
 SupSub.fromHTML = function (elem) {
     let sup = elem.lastChild.childrenQuerySelector("." + classNames.upperIndex);
     let sub = elem.lastChild.childrenQuerySelector("." + classNames.lowerIndex);
 
-    return new SupSub(Term.fromHTML(elem.firstChild), sup ? Block.fromHTML(sup) : null, 
+    return new SupSub(Term.fromHTML(elem.firstChild,elem.firstChild), sup ? Block.fromHTML(sup) : null, 
             sub ? Block.fromHTML(sub) : null);
 
 }
 
 function Var(name) {
     this.name = name; //[string]
+    
+    this.toTex = function(){
+        return this.name;
+    }
 }
 
 Var.fromHTML = function (elem) {
     return new Var(elem.innerText);
-
 }
 
 function Func(name, content) {
     this.name = name; //function name like "log", "sin" ...
     this.content = content; // block
+
+    this.toTex = function(){
+        return `\\${this.name} ${this.content.toTex()}`;
+    }
 }
 
 Func.fromHTML = function (elem) {
