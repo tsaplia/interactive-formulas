@@ -32,11 +32,3 @@ function createFormula(latex){
     MQ.StaticMath(elem);
     return elem;
 }
-
-function InteractiveField(elem){
-    this.main  = elem;
-
-    this.insertContent = function(content){
-        this.main.append(content);
-    }
-}
