@@ -6,3 +6,7 @@
     font-size: 75%;
     vertical-align: -0.5em;
 }
+
+.mq-root-block, .mq-math-mode .mq-root-block{
+    display: inline;
+}
