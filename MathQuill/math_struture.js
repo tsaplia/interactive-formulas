@@ -74,7 +74,29 @@ function Term(content, sign = "+") {
     this.content = content; // array of structures like Variable, Funk, Frac...
 
     this.changeSign = function() {
-        this.sign = this.sign=="+"?"−": "+";
+        this.sign = this.sign=="+" ? "-": "+";
+    };
+
+    this.forAllContent = function(func) {
+        forMultipliers = (block) => {
+            if (block.content.length == 1) {
+                block.content[0].content.forEach((elem) => {
+                    func(elem);
+                });
+            } else {
+                func(block);
+            }
+        };
+
+        for (item of this.content) {
+            if (!(item instanceof Frac)) {
+                func(item);
+                continue;
+            }
+
+            forMultipliers(item.numerator);
+            forMultipliers(item.denomerator);
+        }
     };
 
     this.removeExtraBlocks = function(start = 0, end = this.content.length) {
@@ -93,7 +115,7 @@ function Term(content, sign = "+") {
             if (item instanceof Term) {
                 this.content.push(...item.content);
 
-                if (item.sign == "−") this.changeSign();
+                if (item.sign == "-") this.changeSign();
             } else {
                 this.content.push(item);
             }
@@ -108,7 +130,7 @@ function Term(content, sign = "+") {
 
         for (let item of items) {
             if (item instanceof Term) {
-                if (item.sign == "−") {
+                if (item.sign == "-") {
                     this.changeSign();
                 }
                 this.devide(...item.content);
@@ -183,7 +205,7 @@ Term.fromHTML = function(elem) {
 
     for (let child of elem.children) {
         if (child.classList.contains(classNames.breacker)) {
-            sign = child.innerHTML;
+            sign = child.innerHTML.replace(specialSymbols.minus.sym, "-");
         }
 
         if (child.classList.contains(classNames.operator)) continue;

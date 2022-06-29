@@ -30,41 +30,22 @@ function InteractiveField(elem) {
     };
 
     this._makeHandlers = function(equalityPart) {
-        _makeTermHandlers = (block) => {
-            for (let term of block.content) {
-                _termHandler(term.HTMLElement);
-            }
-        };
-
-        _makeMultiplierHandlers = (term) => {
-            let numerator = term.numerator;
-            let denomerator = term.denomerator;
-
-            for (let item of numerator.content[0].content) {
-                _multiplierHandler(item.HTMLElement);
-            }
-            for (let item of denomerator.content[0].content) {
-                _multiplierHandler(item.HTMLElement);
-            }
-        };
-
-        _multiplierHandler = (elem) => {
-            elem.addEventListener("click", ()=>{
-                this.setActiveElement(elem, activeElementTypes.multiplier);
+        multiplierHandler = (elem) => {
+            elem.HTMLElement.addEventListener("dblclick", ()=>{
+                this.setActiveElement(elem.HTMLElement, activeElementTypes.multiplier);
             });
         };
 
-        _termHandler = (elem) => {
-            elem.addEventListener("click", ()=>{
-                this.setActiveElement(elem, activeElementTypes.term);
+        termHandler = (elem) => {
+            elem.HTMLElement.addEventListener("click", ()=>{
+                this.setActiveElement(elem.HTMLElement, activeElementTypes.term);
             });
         };
 
 
-        if (equalityPart.frac) {
-            _makeMultiplierHandlers(equalityPart.frac);
-        } else {
-            _makeTermHandlers(equalityPart.block);
+        for (let term of equalityPart.block.content) {
+            termHandler(term);
+            term.forAllContent(multiplierHandler);
         }
     };
 
@@ -113,13 +94,6 @@ function Fomula(elem) {
 function EqualityPart(elem) {
     this.HTMLElement = elem;
     this.block = Block.fromHTML(elem);
-    this.frac = null; // [Term] frac of equality part if it`s possible
-
-    if (this.block.content.length == 1) {
-        let termCopy = this.block.content[0].copy(); // copy of the only term of block;
-        termCopy.transformToFrac();
-        this.frac = termCopy.content[0];
-    }
 }
 
 
@@ -132,14 +106,15 @@ function prepareHTML(root) {
     // mark digits
     mark(root, classNames.digit, ":not([class])", (elem) => !isNaN(elem.innerHTML) || elem.innerHTML==".");
     // mark breackers
-    mark(root, classNames.breacker, "span", (elem) => ["+", "−"].includes(elem.innerHTML));
+    mark(root, classNames.breacker, "span", (el) => ["+", specialSymbols.minus.sym].includes(el.innerHTML));
     // group digits to number
     groupByCondition(root, classNames.number, (el) => el.classList.contains(classNames.digit));
     // group letters to function
     groupByCondition(root, classNames.functionName, (el) => el.classList.contains(classNames.letters));
     // making variables
-    groupByCondition(root, classNames.variable, 
-        (el) => el.matches(`var:not([class="${classNames.letters}"])`), (el) => el.innerHTML == "′");
+    groupByCondition(root, classNames.variable,
+        (el) => el.matches(`var:not([class="${classNames.letters}"])`),
+        (el) => el.innerHTML == specialSymbols.prime.sym);
 
     // group function
     groupWithNextSibling(root, "." + classNames.functionName, classNames.function);

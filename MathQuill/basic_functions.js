@@ -22,6 +22,17 @@ const classNames = {
     equalityPart: "equality-part",
 };
 
+const specialSymbols = {
+    minus: {
+        sym: "−",
+        TeX: "-",
+    },
+    prime: {
+        sym: "′",
+        TeX: "'",
+    },
+};
+
 
 function mark(root, className, selector, reducer) {
     let selected = root.querySelectorAll(selector);
