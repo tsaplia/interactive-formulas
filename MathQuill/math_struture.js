@@ -1,6 +1,11 @@
 function Block(content) {
     this.content = content; // arrey of terms
 
+    this.changeSignes = function() {
+        this.content = this.content.map((term) => term.copy());
+        this.content.forEach((term) => term.changeSign());
+    };
+
     this.removeExtraBlocks = function() {
         for (let term of this.content) {
             if (term.content.length == 1 && term.content[0] instanceof Block && term.sign == "+") {
@@ -21,6 +26,14 @@ function Block(content) {
         }
     };
 
+    this.remove = function(...terms) {
+        for (term of terms) {
+            if (!this.content.contains(term)) continue;
+
+            this.content.splice(this.content.indexOf(term), 1);
+        }
+    };
+
     this.toTex = function() {
         let str = "";
         for (let ind = 0; ind < this.content.length; ind++) {
@@ -30,6 +43,11 @@ function Block(content) {
 
             str += content[ind].toTex();
         }
+
+        for (let symbol of Object.values(specialSymbols)) {
+            str.replace(symbol.sym, symbol.TeX);
+        }
+
         return str;
     };
 
@@ -44,7 +62,7 @@ function Block(content) {
     };
 
     this.copy = function() {
-        return new Block(this.content);
+        return new Block(this.content.map((term)=>term.copy()));
     };
 }
 
@@ -62,10 +80,10 @@ Block.fromHTML = function(elem) {
 
 Block.wrap = function wrap(struct) {
     if (struct instanceof Term) {
-        return new Block(struct);
+        return new Block([struct]);
     }
 
-    return new Block([new Term(struct)]);
+    return new Block([new Term([struct])]);
 };
 
 
@@ -77,26 +95,34 @@ function Term(content, sign = "+") {
         this.sign = this.sign=="+" ? "-": "+";
     };
 
-    this.forAllContent = function(func) {
-        forMultipliers = (block) => {
+    this.allMultipliers = function() {
+        let multipliers = [];
+
+        getBlockMultipliers = (block) => {
+            let multipliers = [];
+
             if (block.content.length == 1) {
                 block.content[0].content.forEach((elem) => {
-                    func(elem);
+                    multipliers.push(elem);
                 });
             } else {
-                func(block);
+                multipliers.push(block);
             }
+
+            return multipliers;
         };
 
-        for (item of this.content) {
+        for (let item of this.content) {
             if (!(item instanceof Frac)) {
-                func(item);
+                multipliers.push(item);
                 continue;
             }
 
-            forMultipliers(item.numerator);
-            forMultipliers(item.denomerator);
+            multipliers.push(...getBlockMultipliers(item.numerator),
+                ...getBlockMultipliers(item.denomerator));
         }
+
+        return multipliers;
     };
 
     this.removeExtraBlocks = function(start = 0, end = this.content.length) {
@@ -206,6 +232,7 @@ Term.fromHTML = function(elem) {
     for (let child of elem.children) {
         if (child.classList.contains(classNames.breacker)) {
             sign = child.innerHTML.replace(specialSymbols.minus.sym, "-");
+            continue;
         }
 
         if (child.classList.contains(classNames.operator)) continue;

@@ -33,6 +33,9 @@ const specialSymbols = {
     },
 };
 
+const interactiveFieldFunctions = {
+    t: "separateTerm",
+};
 
 function mark(root, className, selector, reducer) {
     let selected = root.querySelectorAll(selector);
@@ -132,3 +135,14 @@ function childrenQuerySelector(root, selector) {
 
     return null;
 }
+
+
+function createFormula(latex) {
+    let elem = document.createElement("div");
+    elem.className = "formula";
+    elem.innerText = latex;
+
+    MQ.StaticMath(elem);
+    return elem;
+}
+

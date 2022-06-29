@@ -7,9 +7,11 @@ const activeElementTypes = {
 
 function InteractiveField(elem) {
     this.main = elem;
+    this.formulas = [];
+
     this.activeFormula = null;
     this.activeElement = null;
-    this.formulas = [];
+    this.activeElementType = null;
 
     this.insertContent = function(content) {
         this.main.append(content);
@@ -24,7 +26,7 @@ function InteractiveField(elem) {
             this.activeFormula = formula;
 
             if (event.target === content) {
-                this.setActiveElement(content, activeElementTypes.formula);
+                this.setActiveElement(formula, activeElementTypes.formula);
             }
         });
     };
@@ -32,45 +34,55 @@ function InteractiveField(elem) {
     this._makeHandlers = function(equalityPart) {
         multiplierHandler = (elem) => {
             elem.HTMLElement.addEventListener("dblclick", ()=>{
-                this.setActiveElement(elem.HTMLElement, activeElementTypes.multiplier);
+                this.setActiveElement(elem, activeElementTypes.multiplier);
             });
         };
 
         termHandler = (elem) => {
             elem.HTMLElement.addEventListener("click", ()=>{
-                this.setActiveElement(elem.HTMLElement, activeElementTypes.term);
+                this.setActiveElement(elem, activeElementTypes.term);
             });
         };
 
 
         for (let term of equalityPart.block.content) {
             termHandler(term);
-            term.forAllContent(multiplierHandler);
+            term.allMultipliers().forEach((elem) => {
+                multiplierHandler(elem);
+            });
         }
     };
 
     this.setActiveElement = function(elem, type) {
         if (this.activeElement) {
-            this.activeElement.style.borderStyle = "none";
+            this.activeElement.HTMLElement.style.borderStyle = "none";
         }
 
         if (type === activeElementTypes.multiplier) {
-            elem.style.borderStyle = "solid";
+            elem.HTMLElement.style.borderStyle = "solid";
         } else if (type === activeElementTypes.term) {
-            elem.style.borderStyle = "dotted";
+            elem.HTMLElement.style.borderStyle = "dotted";
         } else if (type === activeElementTypes.formula) {
-            elem.style.borderStyle = "solid";
+            elem.HTMLElement.style.borderStyle = "solid";
         }
 
         this.activeElement = elem;
+        this.activeElementType = type;
     };
 
     this.deleteActiveElement = function() {
         if (this.activeElement) {
-            this.activeElement.style.borderStyle = "none";
+            this.activeElement.HTMLElement.style.borderStyle = "none";
         }
 
         this.activeElement = null;
+    };
+
+    this.separateTerm = function() {
+        if (!this.activeElement || this.activeElementType != activeElementTypes.term) return;
+
+        let newFormulaTex = this.activeFormula.separateTerm(this.activeElement);
+        this.insertContent(createFormula(newFormulaTex));
     };
 }
 
@@ -79,7 +91,6 @@ function Fomula(elem) {
     this.HTMLElement = elem.lastChild;
     this.TeX = elem.firstChild.innerHTML;
     this.equalityParts = [];
-    this.activePart = null;
 
     prepareHTML(elem.lastChild);
 
@@ -88,6 +99,40 @@ function Fomula(elem) {
 
         this.equalityParts.push(new EqualityPart(part));
     }
+
+
+    this.separateTerm = function(term) {
+        let activePartIndex;
+        let passivePartIndex;
+
+        if (this.equalityParts[0].block.content.includes(term)) {
+            activePartIndex = 0;
+            passivePartIndex = this.equalityParts.length - 1;
+        } else if (this.equalityParts[this.equalityParts.length - 1].block.content.includes(term)) {
+            activePartIndex = this.equalityParts.length - 1;
+            passivePartIndex = 0;
+        } else {
+            throw new Error("Term is not from this formula");
+        }
+
+        let leftPart = Block.wrap(term.copy());
+        let rightPart = this.equalityParts[passivePartIndex].block.copy();
+
+        for (let item of this.equalityParts[activePartIndex].block.content) {
+            if (item == term) continue;
+
+            let newItem = item.copy();
+            newItem.changeSign();
+            rightPart.add(newItem);
+        }
+
+        if (term.sign=="-") {
+            leftPart.changeSignes();
+            rightPart.changeSignes();
+        }
+
+        return leftPart.toTex() + "=" + rightPart.toTex();
+    };
 }
 
 
