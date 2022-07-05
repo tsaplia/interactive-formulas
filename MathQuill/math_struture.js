@@ -41,7 +41,7 @@ function Block(content) {
                 str += this.content[ind].sign;
             }
 
-            str += content[ind].toTex();
+            str += this.content[ind].toTex();
         }
 
         for (let symbol of Object.values(specialSymbols)) {
@@ -191,6 +191,10 @@ function Term(content, sign = "+") {
         numerator.content[0].removeExtraBlocks();
         denomerator.content[0].removeExtraBlocks();
 
+        if (!denomerator.content[0].content.length) {
+            denomerator.content[0].content.push(new Num(1));
+        }
+
         this.content = [new Frac(numerator, denomerator)];
     };
 
@@ -277,6 +281,10 @@ function Frac(numerator, denomerator) {
         if (!(other instanceof Frac)) return false;
 
         return this.numerator.isEqual(other.numerator) && this.denomerator.isEqual(other.denomerator);
+    };
+
+    this.invert = function() {
+        [this.numerator, this.denomerator] = [this.denomerator, this.numerator];
     };
 }
 

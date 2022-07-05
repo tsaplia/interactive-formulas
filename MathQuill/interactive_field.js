@@ -16,11 +16,11 @@ function InteractiveField(elem) {
     this.insertContent = function(content) {
         this.main.append(content);
 
-        let formula = new Fomula(content, this);
+        let formula = Formula.fromHTML(content);
         this.formulas.push(formula);
 
         this._makeHandlers(formula.equalityParts[0]);
-        this._makeHandlers(formula.equalityParts[formula.equalityParts.length - 1]);
+        this._makeHandlers(formula.equalityParts.slice(-1)[0]);
 
         content.addEventListener("click", (event)=>{
             this.activeFormula = formula;
@@ -31,7 +31,7 @@ function InteractiveField(elem) {
         });
     };
 
-    this._makeHandlers = function(equalityPart) {
+    this._makeHandlers = function(block) {
         multiplierHandler = (elem) => {
             elem.HTMLElement.addEventListener("dblclick", ()=>{
                 this.setActiveElement(elem, activeElementTypes.multiplier);
@@ -45,7 +45,7 @@ function InteractiveField(elem) {
         };
 
 
-        for (let term of equalityPart.block.content) {
+        for (let term of block.content) {
             termHandler(term);
             term.allMultipliers().forEach((elem) => {
                 multiplierHandler(elem);
@@ -81,44 +81,50 @@ function InteractiveField(elem) {
     this.separateTerm = function() {
         if (!this.activeElement || this.activeElementType != activeElementTypes.term) return;
 
-        let newFormulaTex = this.activeFormula.separateTerm(this.activeElement);
-        this.insertContent(createFormula(newFormulaTex));
+        let newFormula = this.activeFormula.separateTerm(this.activeElement);
+        this.insertContent(createFormula(newFormula.toTex()));
+    };
+
+    this.separateMultiplier = function() {
+        if (!this.activeElement || this.activeElementType != activeElementTypes.multiplier) return;
+
+        let newFormula = this.activeFormula.separateMultiplier(this.activeElement);
+        this.insertContent(createFormula(newFormula.toTex()));
     };
 }
 
 
-function Fomula(elem) {
-    this.HTMLElement = elem.lastChild;
-    this.TeX = elem.firstChild.innerHTML;
-    this.equalityParts = [];
+function Formula(equalityParts) {
+    this.equalityParts = equalityParts;
 
-    prepareHTML(elem.lastChild);
+    this.toTex = function() {
+        let TeX = "";
 
-    for (let part of elem.lastChild.children) {
-        if (part.innerHTML == "=") continue;
+        for (let part of this.equalityParts) {
+            TeX += (TeX ? "=" : "" )+ part.toTex();
+        }
 
-        this.equalityParts.push(new EqualityPart(part));
-    }
-
+        return TeX;
+    };
 
     this.separateTerm = function(term) {
-        let activePartIndex;
-        let passivePartIndex;
+        let activePart;
+        let passivePart;
 
-        if (this.equalityParts[0].block.content.includes(term)) {
-            activePartIndex = 0;
-            passivePartIndex = this.equalityParts.length - 1;
-        } else if (this.equalityParts[this.equalityParts.length - 1].block.content.includes(term)) {
-            activePartIndex = this.equalityParts.length - 1;
-            passivePartIndex = 0;
+        if (this.equalityParts[0].content.includes(term)) {
+            activePart = this.equalityParts[0];
+            passivePart = this.equalityParts.slice(-1)[0];
+        } else if (this.equalityParts.slice(-1)[0].content.includes(term)) {
+            activePart = this.equalityParts.slice(-1)[0];
+            passivePart = this.equalityParts[0];
         } else {
             throw new Error("Term is not from this formula");
         }
 
         let leftPart = Block.wrap(term.copy());
-        let rightPart = this.equalityParts[passivePartIndex].block.copy();
+        let rightPart = passivePart.copy();
 
-        for (let item of this.equalityParts[activePartIndex].block.content) {
+        for (let item of activePart.content) {
             if (item == term) continue;
 
             let newItem = item.copy();
@@ -131,41 +137,66 @@ function Fomula(elem) {
             rightPart.changeSignes();
         }
 
-        return leftPart.toTex() + "=" + rightPart.toTex();
+        return new Formula([leftPart, rightPart]);
+    };
+
+    this.separateMultiplier = function(mult) {
+        let formula;
+        for (let term of this.equalityParts.slice(-1)[0].content.concat(this.equalityParts[0].content)) {
+            if (term.allMultipliers().includes(mult)) {
+                formula = this.separateTerm(term);
+                break;
+            }
+        }
+
+        formula.equalityParts[0].content[0].transformToFrac();
+        if (formula.equalityParts[1].content.length == 1) {
+            formula.equalityParts[1].content[0].transformToFrac();
+        } else {
+            formula.equalityParts[1] = Block.wrap(new Frac(
+                Block.wrap(formula.equalityParts[1]), Block.wrap(new Num(1))));
+        }
+
+        for (let item of formula.equalityParts[0].content[0].content[0].numerator.content[0].content) {
+            if (item === mult) continue;
+
+            formula.equalityParts[1].content[0].content[0].denomerator.content[0].mul(item);
+        }
+
+        let inverted = false;
+        for (let item of formula.equalityParts[0].content[0].content[0].denomerator.content[0].content) {
+            if (item === mult) {
+                inverted = true;
+                continue;
+            }
+
+            formula.equalityParts[1].content[0].content[0].numerator.content[0].mul(item);
+        }
+
+        if (inverted) {
+            formula.equalityParts[1].content[0].content[0].invert();
+        }
+
+        formula.equalityParts[0] = Block.wrap(mult);
+        return formula;
     };
 }
 
+Formula.fromHTML = function(elem) {
+    prepareHTML(elem.lastChild);
 
-function EqualityPart(elem) {
-    this.HTMLElement = elem;
-    this.block = Block.fromHTML(elem);
-}
+    let equalityParts = [];
+
+    for (let part of elem.lastChild.children) {
+        if (part.innerHTML == "=") continue;
+
+        equalityParts.push(Block.fromHTML(part));
+    }
+
+    let formula = new Formula(equalityParts);
+    formula.HTMLElement = elem;
+    formula.TeX = elem.lastChild.innerHTML;
+    return formula;
+};
 
 
-function prepareHTML(root) {
-    let cursor = root.querySelector(".mq-cursor");
-    if (cursor) cursor.parentElement.removeChild(cursor);
-
-    makeEqualityParts(root);
-
-    // mark digits
-    mark(root, classNames.digit, ":not([class])", (elem) => !isNaN(elem.innerHTML) || elem.innerHTML==".");
-    // mark breackers
-    mark(root, classNames.breacker, "span", (el) => ["+", specialSymbols.minus.sym].includes(el.innerHTML));
-    // group digits to number
-    groupByCondition(root, classNames.number, (el) => el.classList.contains(classNames.digit));
-    // group letters to function
-    groupByCondition(root, classNames.functionName, (el) => el.classList.contains(classNames.letters));
-    // making variables
-    groupByCondition(root, classNames.variable,
-        (el) => el.matches(`var:not([class="${classNames.letters}"])`),
-        (el) => el.innerHTML == specialSymbols.prime.sym);
-
-    // group function
-    groupWithNextSibling(root, "." + classNames.functionName, classNames.function);
-    // make sqrt group with base
-    groupWithNextSibling(root, "." + classNames.sqrtBase, classNames.selectable);
-    // make subsub group
-    groupWithPreviousSibling(root, "." + classNames.indices, classNames.selectable);
-    makeTermsGroup(root);
-}

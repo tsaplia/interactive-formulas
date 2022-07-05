@@ -35,6 +35,7 @@ const specialSymbols = {
 
 const interactiveFieldFunctions = {
     t: "separateTerm",
+    m: "separateMultiplier",
 };
 
 function mark(root, className, selector, reducer) {
@@ -145,4 +146,34 @@ function createFormula(latex) {
     MQ.StaticMath(elem);
     return elem;
 }
+
+
+function prepareHTML(root) {
+    let cursor = root.querySelector(".mq-cursor");
+    if (cursor) cursor.parentElement.removeChild(cursor);
+
+    makeEqualityParts(root);
+
+    // mark digits
+    mark(root, classNames.digit, ":not([class])", (elem) => !isNaN(elem.innerHTML) || elem.innerHTML==".");
+    // mark breackers
+    mark(root, classNames.breacker, "span", (el) => ["+", specialSymbols.minus.sym].includes(el.innerHTML));
+    // group digits to number
+    groupByCondition(root, classNames.number, (el) => el.classList.contains(classNames.digit));
+    // group letters to function
+    groupByCondition(root, classNames.functionName, (el) => el.classList.contains(classNames.letters));
+    // making variables
+    groupByCondition(root, classNames.variable,
+        (el) => el.matches(`var:not([class="${classNames.letters}"])`),
+        (el) => el.innerHTML == specialSymbols.prime.sym);
+
+    // group function
+    groupWithNextSibling(root, "." + classNames.functionName, classNames.function);
+    // make sqrt group with base
+    groupWithNextSibling(root, "." + classNames.sqrtBase, classNames.selectable);
+    // make subsub group
+    groupWithPreviousSibling(root, "." + classNames.indices, classNames.selectable);
+    makeTermsGroup(root);
+}
+
 
