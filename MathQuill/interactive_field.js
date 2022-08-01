@@ -32,13 +32,13 @@ function InteractiveField(elem) {
     };
 
     this._makeHandlers = function(block) {
-        multiplierHandler = (elem) => {
+        let multiplierHandler = (elem) => {
             elem.HTMLElement.addEventListener("dblclick", ()=>{
                 this.setActiveElement(elem, activeElementTypes.multiplier);
             });
         };
 
-        termHandler = (elem) => {
+        let termHandler = (elem) => {
             elem.HTMLElement.addEventListener("click", ()=>{
                 this.setActiveElement(elem, activeElementTypes.term);
             });
@@ -137,48 +137,59 @@ function Formula(equalityParts) {
             rightPart.changeSignes();
         }
 
+        rightPart.simplify();
+
         return new Formula([leftPart, rightPart]);
     };
 
     this.separateMultiplier = function(mult) {
-        let formula;
+        let leftPart;
+        let rightPart;
         for (let term of this.equalityParts.slice(-1)[0].content.concat(this.equalityParts[0].content)) {
             if (term.allMultipliers().includes(mult)) {
-                formula = this.separateTerm(term);
+                [leftPart, rightPart] = this.separateTerm(term).equalityParts;
                 break;
             }
         }
 
-        formula.equalityParts[0].content[0].transformToFrac();
-        if (formula.equalityParts[1].content.length == 1) {
-            formula.equalityParts[1].content[0].transformToFrac();
-        } else {
-            formula.equalityParts[1] = Block.wrap(new Frac(
-                Block.wrap(formula.equalityParts[1]), Block.wrap(new Num(1))));
+        if (rightPart.content.length > 1) {
+            rightPart = Block.wrap( new Frac(rightPart, Block.wrap(new Num(1))) );
         }
 
-        for (let item of formula.equalityParts[0].content[0].content[0].numerator.content[0].content) {
-            if (item === mult) continue;
-
-            formula.equalityParts[1].content[0].content[0].denomerator.content[0].mul(item);
+        leftPart.content[0].transformToFrac();
+        if (leftPart.content[0].content[0].denomerator.content.length > 1) {
+            leftPart.content[0].content[0].denomerator = Block.wrap(leftPart.content[0].content[0].denomerator);
+        }
+        if (leftPart.content[0].content[0].numerator.content.length > 1) {
+            leftPart.content[0].content[0].numerator = Block.wrap(leftPart.content[0].content[0].numerator);
         }
 
         let inverted = false;
-        for (let item of formula.equalityParts[0].content[0].content[0].denomerator.content[0].content) {
+        for (let item of leftPart.content[0].content[0].denomerator.content[0].content) {
             if (item === mult) {
                 inverted = true;
                 continue;
             }
 
-            formula.equalityParts[1].content[0].content[0].numerator.content[0].mul(item);
+            rightPart.content[0].mul(item);
+        }
+
+        for (let item of leftPart.content[0].content[0].numerator.content[0].content) {
+            if (item === mult) continue;
+
+            rightPart.content[0].devide(item);
         }
 
         if (inverted) {
-            formula.equalityParts[1].content[0].content[0].invert();
+            rightPart.content[0].content[0].invert();
         }
 
-        formula.equalityParts[0] = Block.wrap(mult);
-        return formula;
+        rightPart.content[0].simplify();
+        rightPart.simplify();
+        leftPart = Block.wrap(mult);
+        leftPart.simplify();
+
+        return new Formula([leftPart, rightPart]);
     };
 }
 
@@ -195,7 +206,7 @@ Formula.fromHTML = function(elem) {
 
     let formula = new Formula(equalityParts);
     formula.HTMLElement = elem;
-    formula.TeX = elem.lastChild.innerHTML;
+    formula.TeX = elem.firstChild.innerHTML;
     return formula;
 };
 

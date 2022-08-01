@@ -1,255 +1,3 @@
-function Block(content) {
-    this.content = content; // arrey of terms
-
-    this.changeSignes = function() {
-        this.content = this.content.map((term) => term.copy());
-        this.content.forEach((term) => term.changeSign());
-    };
-
-    this.removeExtraBlocks = function() {
-        for (let term of this.content) {
-            if (term.content.length == 1 && term.content[0] instanceof Block && term.sign == "+") {
-                this.content.splice(this.content.indexOf(term), 1, ...term.content[0].content);
-            }
-        }
-    };
-
-    this.add = function(...items) {
-        for (let item of items) {
-            if (item instanceof Term) {
-                this.content.push(item);
-            } else if (item instanceof Block) {
-                this.content.push(...item.content);
-            } else {
-                throw new Error(`Can\`t add ${item.constructor.name} to Block`);
-            }
-        }
-    };
-
-    this.remove = function(...terms) {
-        for (term of terms) {
-            if (!this.content.contains(term)) continue;
-
-            this.content.splice(this.content.indexOf(term), 1);
-        }
-    };
-
-    this.toTex = function() {
-        let str = "";
-        for (let ind = 0; ind < this.content.length; ind++) {
-            if (ind != 0 || this.content[ind].sign != "+") {
-                str += this.content[ind].sign;
-            }
-
-            str += this.content[ind].toTex();
-        }
-
-        for (let symbol of Object.values(specialSymbols)) {
-            str.replace(symbol.sym, symbol.TeX);
-        }
-
-        return str;
-    };
-
-    this.isEqual = function(other) {
-        if (!(other instanceof Block) || this.content.length != other.content.length) return false;
-
-        for (let ind = 0; ind < this.content.length; ind++) {
-            if (!this.content[ind].isEqual(other.content[ind])) return false;
-        }
-
-        return true;
-    };
-
-    this.copy = function() {
-        return new Block(this.content.map((term)=>term.copy()));
-    };
-}
-
-Block.fromHTML = function(elem) {
-    let content = [];
-
-    for (let child of elem.children) {
-        content.push(Term.fromHTML(child));
-    }
-
-    let block = new Block(content);
-    block.HTMLElement = elem;
-    return block;
-};
-
-Block.wrap = function wrap(struct) {
-    if (struct instanceof Term) {
-        return new Block([struct]);
-    }
-
-    return new Block([new Term([struct])]);
-};
-
-
-function Term(content, sign = "+") {
-    this.sign = sign; // plus(+) or minus(-)
-    this.content = content; // array of structures like Variable, Funk, Frac...
-
-    this.changeSign = function() {
-        this.sign = this.sign=="+" ? "-": "+";
-    };
-
-    this.allMultipliers = function() {
-        let multipliers = [];
-
-        getBlockMultipliers = (block) => {
-            let multipliers = [];
-
-            if (block.content.length == 1) {
-                block.content[0].content.forEach((elem) => {
-                    multipliers.push(elem);
-                });
-            } else {
-                multipliers.push(block);
-            }
-
-            return multipliers;
-        };
-
-        for (let item of this.content) {
-            if (!(item instanceof Frac)) {
-                multipliers.push(item);
-                continue;
-            }
-
-            multipliers.push(...getBlockMultipliers(item.numerator),
-                ...getBlockMultipliers(item.denomerator));
-        }
-
-        return multipliers;
-    };
-
-    this.removeExtraBlocks = function(start = 0, end = this.content.length) {
-        for (let ind = start; ind < end; ind ++) {
-            let term = this.content[ind];
-            if (!(term instanceof Block)) continue;
-
-            if (term.content.length == 1) {
-                this.content.splice(this.content.indexOf(term), 1, ...term.content[0].content);
-            }
-        }
-    };
-
-    this.mul = function(...items) {
-        for (let item of items) {
-            if (item instanceof Term) {
-                this.content.push(...item.content);
-
-                if (item.sign == "-") this.changeSign();
-            } else {
-                this.content.push(item);
-            }
-        }
-    };
-
-    this.devide = function(...items) {
-        this.transformToFrac();
-
-        let numerator = this.content[0].numerator;
-        let denomerator = this.content[0].denomerator;
-
-        for (let item of items) {
-            if (item instanceof Term) {
-                if (item.sign == "-") {
-                    this.changeSign();
-                }
-                this.devide(...item.content);
-            } else if (item instanceof Frac) {
-                denomerator.content[0].content.push(item.numerator);
-                numerator.content[0].content.push(item.denomerator);
-            } else {
-                denomerator.content[0].content.push(item);
-            }
-        }
-
-        numerator.content[0].removeExtraBlocks();
-        denomerator.content[0].removeExtraBlocks();
-
-        if (!this.toTex() || this.toTex()==="1") {
-            this.content = numerator.content[0];
-        }
-    };
-
-    this.transformToFrac = function() {
-        let denomerator = new Block([new Term([])]);
-        let numerator = new Block([new Term([])]);
-
-        for (let item of this.content) {
-            if (item instanceof Frac) {
-                denomerator.content[0].content.push(item.denomerator);
-                numerator.content[0].content.push(item.numerator);
-            } else {
-                numerator.content[0].content.push(item);
-            }
-        }
-        numerator.content[0].removeExtraBlocks();
-        denomerator.content[0].removeExtraBlocks();
-
-        if (!denomerator.content[0].content.length) {
-            denomerator.content[0].content.push(new Num(1));
-        }
-
-        this.content = [new Frac(numerator, denomerator)];
-    };
-
-    this.toTex = function() {
-        let str = "";
-        for (let ind = 0; ind < this.content.length; ind++) {
-            if (this.content[ind] instanceof Num && ind > 0) {
-                str += "\\cdot ";
-            }
-            if (this.content[ind] instanceof Block) {
-                str += `\\left(${this.content[ind].toTex()}\\right)`;
-            } else {
-                str += this.content[ind].toTex();
-            }
-        }
-        return str;
-    };
-
-    this.isEqual = function(other) {
-        if (this.sign != other.sign || !(other instanceof Term) ||
-            this.content.length != other.content.length) return false;
-
-        for (let ind = 0; ind < this.content.length; ind++) {
-            if (!this.content[ind].isEqual(other.content[ind])) return false;
-        }
-
-        return true;
-    };
-
-    this.copy = function() {
-        return new Term(this.content, this.sign);
-    };
-}
-
-Term.fromHTML = function(elem) {
-    let content = [];
-    let sign = "+";
-
-    for (let child of elem.children) {
-        if (child.classList.contains(classNames.breacker)) {
-            sign = child.innerHTML.replace(specialSymbols.minus.sym, "-");
-            continue;
-        }
-
-        if (child.classList.contains(classNames.operator)) continue;
-
-        content.push(getMathStructure(child));
-    }
-
-    let term = new Term(content, sign);
-    term.HTMLElement = elem;
-    return term;
-};
-
-
 function getMathStructure(elem) {
     if (elem.classList.contains(classNames.variable) || elem.tagName === "VAR") {
         return Variable.fromHTML(elem);
@@ -285,6 +33,10 @@ function Frac(numerator, denomerator) {
 
     this.invert = function() {
         [this.numerator, this.denomerator] = [this.denomerator, this.numerator];
+    };
+
+    this.copy = function() {
+        return new Frac(this.numerator.copy(), this.denomerator.copy());
     };
 }
 
@@ -368,6 +120,15 @@ SupSub.fromHTML = function(elem) {
     return subsub;
 };
 
+// returns [base, power] of any structure
+SupSub.getPower = function(structure) {
+    if (structure instanceof SupSub) {
+        return [structure.base, structure.upperIndex];
+    }
+
+    return [structure, Block.wrap(new Num(1))];
+};
+
 
 function Variable(name) {
     this.name = name; // [string]
@@ -414,6 +175,10 @@ Func.fromHTML = function(elem) {
 
 function Num(number) {
     this.value = Number(number);
+
+    if (this.value < 0) {
+        throw new Error("Number must be >= 0");
+    }
 
     this.valueOf = function() {
         return this.value;
