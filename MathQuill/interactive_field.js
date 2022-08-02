@@ -2,13 +2,29 @@ function InteractiveField(elem) {
     this.main = elem;
     this.formulas = [];
 
-    this.active = null;
-
     this.main.addEventListener("click", (event)=>{
         if (event.target == this.main) {
-            this.deleteActive();
+            this.deleteActiveAll();
         }
     });
+
+    this.active = [];
+
+    this._activeTypes = {
+        mult: 0,
+        term: 1,
+        formula: 2,
+    };
+
+    this._getActiveType = function(struct) {
+        if (struct instanceof Formula) {
+            return this._activeTypes.formula;
+        } else if (struct instanceof Term) {
+            return this._activeTypes.term;
+        } else {
+            return this._activeTypes.mult;
+        }
+    };
 
     this.insertContent = function(content) {
         this.main.append(content);
@@ -32,8 +48,8 @@ function InteractiveField(elem) {
 
     this.multiplierHandler = function(mult) {
         mult.HTMLElement.addEventListener("click", (event) => {
-            if (this.active && this.active.element == mult) {
-                this.deleteActive();
+            if (this._isActive(mult)) {
+                this.deleteActive(mult);
                 event.stopPropagation();
                 return;
             };
@@ -48,7 +64,7 @@ function InteractiveField(elem) {
     this.termHandler = function(term) {
         term.HTMLElement.addEventListener("click", (event)=>{
             if (event.clickDescription) {
-                if (!this.active || this.active.term != term) {
+                if (!this._isActive(term, "term")) {
                     event.clickDescription.element = term;
                     delete event.clickDescription.mult;
                 }
@@ -59,8 +75,8 @@ function InteractiveField(elem) {
             }
             event.clickDescription.term = term;
 
-            if (event.clickDescription.element == term && this.active && this.active.element == term) {
-                this.deleteActive();
+            if (event.clickDescription.element == term && this._isActive(term)) {
+                this.deleteActive(term);
                 event.stopPropagation();
             }
         });
@@ -75,51 +91,85 @@ function InteractiveField(elem) {
             }
             event.clickDescription.formula = formula;
 
-            if (event.clickDescription.element == formula && this.active && this.active.element == formula) {
+            if (event.clickDescription.element == formula && this._isActive(formula)) {
                 this.deleteActive();
                 return;
             }
 
-            this.setActive(event.clickDescription);
+            if (event.shiftKey) {
+                this.addActive(event.clickDescription);
+            } else {
+                this.setActive(event.clickDescription);
+            }
         });
     };
 
     this.setActive = function(active) {
-        if (this.active) {
-            this.active.element.HTMLElement.style.borderStyle = "none";
-        }
+        this.deleteActiveAll();
 
-        if (active.element instanceof Formula) {
-            active.element.HTMLElement.style.borderStyle = "dotted";
-        } else if (active.element instanceof Term) {
-            active.element.HTMLElement.style.borderStyle = "dashed";
-        } else {
-            active.element.HTMLElement.style.borderStyle = "solid";
-        }
-
-        this.active = active;
+        this._setBorder(active.element);
+        this.active.push(active);
     };
 
-    this.deleteActive = function() {
-        if (this.active) {
-            this.active.element.HTMLElement.style.borderStyle = "none";
+    this.addActive = function(active) {
+        for (let key in active) {
+            this.deleteActive(active[key]);
         }
 
-        this.active = null;
+        this._setBorder(active.element);
+        this.active.push(active);
+    };
+
+    this._setBorder = function(struct) {
+        switch (this._getActiveType(struct)) {
+        case this._activeTypes.formula:
+            struct.HTMLElement.style.borderStyle = "dotted";
+            break;
+        case this._activeTypes.term:
+            struct.HTMLElement.style.borderStyle = "dashed";
+            break;
+        case this._activeTypes.mult:
+            struct.HTMLElement.style.borderStyle = "solid";
+            break;
+        }
+    };
+
+    this.deleteActive = function(elem) {
+        for (let i=0; i<this.active.length; i++) {
+            if (this.active[i].element == elem) {
+                this.active[i].element.HTMLElement.style.borderStyle = "none";
+                this.active.splice(i, 1);
+                return;
+            }
+        }
+    };
+
+    this.deleteActiveAll = function() {
+        for (let obj of this.active) {
+            obj.element.HTMLElement.style.borderStyle = "none";
+        }
+
+        this.active = [];
+    };
+
+    this._isActive = function(elem, param="element") {
+        for (let obj of this.active) {
+            if (obj[param] == elem) return true;
+        }
+        return false;
     };
 
     this.separateTerm = function() {
-        if (!this.active || !(this.active.element instanceof Term)) return;
+        if (this.active.length != 1 || this._getActiveType(this.active[0]) != this._activeTypes.term) return;
 
-        let newFormula = this.active.formula.separateTerm(this.active.element);
+        let newFormula = this.active[0].formula.separateTerm(this.active[0].element);
         this.insertContent(createFormula(newFormula.toTex()));
     };
 
     this.separateMultiplier = function() {
-        if (!this.active || this.active.element instanceof Term || this.active.element instanceof Formula) 
-            return;
+        if (this.active.length != 1 || this._getActiveType(this.active[0]) != this._activeTypes.mult) return;
 
-        let newFormula = this.active.formula.separateMultiplier(this.active.element, this.active.term);
+        let newFormula = this.active[0].formula.separateMultiplier(this.active[0].element, this.active[0].term);
         this.insertContent(createFormula(newFormula.toTex()));
     };
 }
