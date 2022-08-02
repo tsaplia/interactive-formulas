@@ -1,17 +1,14 @@
-const activeElementTypes = {
-    formula: 0,
-    multiplier: 1,
-    term: 2,
-};
-
-
 function InteractiveField(elem) {
     this.main = elem;
     this.formulas = [];
 
-    this.activeFormula = null;
-    this.activeElement = null;
-    this.activeElementType = null;
+    this.active = null;
+
+    this.main.addEventListener("click", (event)=>{
+        if (event.target == this.main) {
+            this.deleteActive();
+        }
+    });
 
     this.insertContent = function(content) {
         this.main.append(content);
@@ -19,76 +16,110 @@ function InteractiveField(elem) {
         let formula = Formula.fromHTML(content);
         this.formulas.push(formula);
 
-        this._makeHandlers(formula.equalityParts[0]);
-        this._makeHandlers(formula.equalityParts.slice(-1)[0]);
+        this._setHandlers(formula.equalityParts[0]);
+        this._setHandlers(formula.equalityParts.slice(-1)[0]);
+        this.formulaHandler(formula);
+    };
 
-        content.addEventListener("click", (event)=>{
-            this.activeFormula = formula;
+    this._setHandlers = function(block) {
+        for (let term of block.content) {
+            this.termHandler(term);
+            term.allMultipliers().forEach((elem) => {
+                this.multiplierHandler(elem);
+            });
+        }
+    };
 
-            if (event.target === content) {
-                this.setActiveElement(formula, activeElementTypes.formula);
+    this.multiplierHandler = function(mult) {
+        mult.HTMLElement.addEventListener("click", (event) => {
+            if (this.active && this.active.element == mult) {
+                this.deleteActive();
+                event.stopPropagation();
+                return;
+            };
+
+            event.clickDescription = {
+                element: mult,
+                mult: mult,
+            };
+        });
+    };
+
+    this.termHandler = function(term) {
+        term.HTMLElement.addEventListener("click", (event)=>{
+            if (event.clickDescription) {
+                if (!this.active || this.active.term != term) {
+                    event.clickDescription.element = term;
+                    delete event.clickDescription.mult;
+                }
+            } else {
+                event.clickDescription = {
+                    element: term,
+                };
+            }
+            event.clickDescription.term = term;
+
+            if (event.clickDescription.element == term && this.active && this.active.element == term) {
+                this.deleteActive();
+                event.stopPropagation();
             }
         });
     };
 
-    this._makeHandlers = function(block) {
-        let multiplierHandler = (elem) => {
-            elem.HTMLElement.addEventListener("dblclick", ()=>{
-                this.setActiveElement(elem, activeElementTypes.multiplier);
-            });
-        };
+    this.formulaHandler = function(formula) {
+        formula.HTMLElement.addEventListener("click", (event)=>{
+            if (!event.clickDescription) {
+                event.clickDescription = {
+                    element: formula,
+                };
+            }
+            event.clickDescription.formula = formula;
 
-        let termHandler = (elem) => {
-            elem.HTMLElement.addEventListener("click", ()=>{
-                this.setActiveElement(elem, activeElementTypes.term);
-            });
-        };
+            if (event.clickDescription.element == formula && this.active && this.active.element == formula) {
+                this.deleteActive();
+                return;
+            }
 
-
-        for (let term of block.content) {
-            termHandler(term);
-            term.allMultipliers().forEach((elem) => {
-                multiplierHandler(elem);
-            });
-        }
+            this.setActive(event.clickDescription);
+        });
     };
 
-    this.setActiveElement = function(elem, type) {
-        if (this.activeElement) {
-            this.activeElement.HTMLElement.style.borderStyle = "none";
+    this.setActive = function(active) {
+        if (this.active) {
+            this.active.element.HTMLElement.style.borderStyle = "none";
         }
 
-        if (type === activeElementTypes.multiplier) {
-            elem.HTMLElement.style.borderStyle = "solid";
-        } else if (type === activeElementTypes.term) {
-            elem.HTMLElement.style.borderStyle = "dotted";
-        } else if (type === activeElementTypes.formula) {
-            elem.HTMLElement.style.borderStyle = "solid";
+        if (active.element instanceof Formula) {
+            active.element.HTMLElement.style.borderStyle = "dotted";
+        } else if (active.element instanceof Term) {
+            active.element.HTMLElement.style.borderStyle = "dashed";
+        } else {
+            active.element.HTMLElement.style.borderStyle = "solid";
         }
 
-        this.activeElement = elem;
-        this.activeElementType = type;
+        this.active = active;
     };
 
-    this.deleteActiveElement = function() {
-        if (this.activeElement) {
-            this.activeElement.HTMLElement.style.borderStyle = "none";
+    this.deleteActive = function() {
+        if (this.active) {
+            this.active.element.HTMLElement.style.borderStyle = "none";
         }
 
-        this.activeElement = null;
+        this.active = null;
     };
 
     this.separateTerm = function() {
-        if (!this.activeElement || this.activeElementType != activeElementTypes.term) return;
+        if (!this.active || !(this.active.element instanceof Term)) return;
 
-        let newFormula = this.activeFormula.separateTerm(this.activeElement);
+        let newFormula = this.active.formula.separateTerm(this.active.element);
         this.insertContent(createFormula(newFormula.toTex()));
     };
 
     this.separateMultiplier = function() {
-        if (!this.activeElement || this.activeElementType != activeElementTypes.multiplier) return;
+        if (!this.active || this.active.element instanceof Term || this.active.element instanceof Formula) 
+            return;
 
-        let newFormula = this.activeFormula.separateMultiplier(this.activeElement);
+        let newFormula = this.active.formula.separateMultiplier(this.active.element, this.active.term);
         this.insertContent(createFormula(newFormula.toTex()));
     };
 }
@@ -132,7 +163,7 @@ function Formula(equalityParts) {
             rightPart.add(newItem);
         }
 
-        if (term.sign=="-") {
+        if (term.sign == "-") {
             leftPart.changeSignes();
             rightPart.changeSignes();
         }
@@ -142,15 +173,10 @@ function Formula(equalityParts) {
         return new Formula([leftPart, rightPart]);
     };
 
-    this.separateMultiplier = function(mult) {
+    this.separateMultiplier = function(mult, term) {
         let leftPart;
         let rightPart;
-        for (let term of this.equalityParts.slice(-1)[0].content.concat(this.equalityParts[0].content)) {
-            if (term.allMultipliers().includes(mult)) {
-                [leftPart, rightPart] = this.separateTerm(term).equalityParts;
-                break;
-            }
-        }
+        [leftPart, rightPart] = this.separateTerm(term).equalityParts;
 
         if (rightPart.content.length > 1) {
             rightPart = Block.wrap( new Frac(rightPart, Block.wrap(new Num(1))) );

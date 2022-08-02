@@ -10,3 +10,7 @@
 .mq-root-block, .mq-math-mode .mq-root-block{
     display: inline;
 }
+
+#interactive{
+    padding: 0 20px 20px 0;
+}
