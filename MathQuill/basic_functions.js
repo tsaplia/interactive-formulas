@@ -36,6 +36,7 @@ const specialSymbols = {
 const interactiveFieldFunctions = {
     t: "separateTerm",
     m: "separateMultiplier",
+    o: "openBrackets",
 };
 
 function mark(root, className, selector, reducer) {

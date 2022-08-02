@@ -32,8 +32,8 @@ function InteractiveField(elem) {
         let formula = Formula.fromHTML(content);
         this.formulas.push(formula);
 
-        this._setHandlers(formula.equalityParts[0]);
-        this._setHandlers(formula.equalityParts.slice(-1)[0]);
+        this._setHandlers(formula.leftPart());
+        this._setHandlers(formula.rightPart());
         this.formulaHandler(formula);
     };
 
@@ -160,16 +160,23 @@ function InteractiveField(elem) {
     };
 
     this.separateTerm = function() {
-        if (this.active.length != 1 || this._getActiveType(this.active[0]) != this._activeTypes.term) return;
+        if (this.active.length != 1 || this._getActiveType(this.active[0].element) != this._activeTypes.term) return;
 
         let newFormula = this.active[0].formula.separateTerm(this.active[0].element);
         this.insertContent(createFormula(newFormula.toTex()));
     };
 
     this.separateMultiplier = function() {
-        if (this.active.length != 1 || this._getActiveType(this.active[0]) != this._activeTypes.mult) return;
+        if (this.active.length != 1 || this._getActiveType(this.active[0].element) != this._activeTypes.mult) return;
 
         let newFormula = this.active[0].formula.separateMultiplier(this.active[0].element, this.active[0].term);
+        this.insertContent(createFormula(newFormula.toTex()));
+    };
+
+    this.openBrackets = function() {
+        if (this.active.length != 1 || (!this.active[0].element instanceof Block)) return;
+
+        let newFormula = this.active[0].formula.openBrackets(this.active[0].element, this.active[0].term);
         this.insertContent(createFormula(newFormula.toTex()));
     };
 }
@@ -177,6 +184,26 @@ function InteractiveField(elem) {
 
 function Formula(equalityParts) {
     this.equalityParts = equalityParts;
+
+    this.leftPart = function() {
+        return this.equalityParts[0];
+    };
+
+    this.rightPart = function() {
+        return this.equalityParts.slice(-1)[0];
+    };
+
+    this._getActivePart = function(term) {
+        if (this.leftPart().content.includes(term)) return this.leftPart();
+        if (this.rightPart().content.includes(term)) return this.rightPart();
+        else throw new Error();
+    };
+
+    this._getPassivePart = function(term) {
+        if (this.leftPart().content.includes(term)) return this.rightPart();
+        if (this.rightPart().content.includes(term)) return this.leftPart();
+        else throw new Error();
+    };
 
     this.toTex = function() {
         let TeX = "";
@@ -188,19 +215,13 @@ function Formula(equalityParts) {
         return TeX;
     };
 
-    this.separateTerm = function(term) {
-        let activePart;
-        let passivePart;
+    this.copy = function() {
+        return new Formula(this.equalityParts.map((part)=>part.copy()));
+    };
 
-        if (this.equalityParts[0].content.includes(term)) {
-            activePart = this.equalityParts[0];
-            passivePart = this.equalityParts.slice(-1)[0];
-        } else if (this.equalityParts.slice(-1)[0].content.includes(term)) {
-            activePart = this.equalityParts.slice(-1)[0];
-            passivePart = this.equalityParts[0];
-        } else {
-            throw new Error("Term is not from this formula");
-        }
+    this.separateTerm = function(term) {
+        let activePart = this._getActivePart(term);
+        let passivePart = this._getPassivePart(term);
 
         let leftPart = Block.wrap(term.copy());
         let rightPart = passivePart.copy();
@@ -266,6 +287,30 @@ function Formula(equalityParts) {
         leftPart.simplify();
 
         return new Formula([leftPart, rightPart]);
+    };
+
+    this.openBrackets = function(block, term) {
+        let part = this._getActivePart(term).copy();
+
+        let newTerms = [];
+        block.content.forEach((item)=>{
+            let newTerm = term.copy();
+            newTerm.content.splice(newTerm.content.indexOf(block), 1);
+
+            newTerm.mul(item);
+            newTerms.push(newTerm);
+        });
+
+        for (let i=0; i<part.content.length; i++) {
+            if (!part.content[i].content.includes(block)) continue;
+
+            part.content.splice(i, 1, ...newTerms);
+        }
+
+        if (this._getActivePart(term) == this.leftPart()) {
+            return new Formula([part, this.rightPart().copy()]);
+        }
+        return new Formula([this.leftPart(), part]);
     };
 }
 
