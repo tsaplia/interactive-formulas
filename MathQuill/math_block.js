@@ -6,7 +6,7 @@ function Block(content) {
         this.content.forEach((term) => term.changeSign());
     };
 
-    this._removeExtraBlocks = function() {
+    this.removeExtraBlocks = function() {
         let modified = false;
         for (let term of this.content) {
             if (term.content.length == 1 && term.content[0] instanceof Block && term.sign == "+") {
@@ -19,7 +19,7 @@ function Block(content) {
     };
 
     this.simplify = function() {
-        this._removeExtraBlocks();
+        this.removeExtraBlocks();
 
         for (let i=0; i<this.content.length; i++) {
             for (let j=i+1; j<this.content.length; j++) {
@@ -91,12 +91,16 @@ function Block(content) {
         }
     };
 
-    this.remove = function(...terms) {
-        for (term of terms) {
-            if (!this.content.contains(term)) continue;
+    this.getMultipliers = function() {
+        let multipliers = [];
 
-            this.content.splice(this.content.indexOf(term), 1);
+        if (this.content.length == 1) {
+            multipliers.push(...this.content[0].content);
+        } else {
+            multipliers.push(this);
         }
+
+        return multipliers;
     };
 
     this.toTex = function() {

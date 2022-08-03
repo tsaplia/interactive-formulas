@@ -11,41 +11,27 @@ function Term(content, sign = "+") {
     this.allMultipliers = function() {
         let multipliers = [];
 
-        getBlockMultipliers = (block) => {
-            let multipliers = [];
-
-            if (block.content.length == 1) {
-                block.content[0].content.forEach((elem) => {
-                    multipliers.push(elem);
-                });
-            } else {
-                multipliers.push(block);
-            }
-
-            return multipliers;
-        };
-
         for (let item of this.content) {
             if (!(item instanceof Frac)) {
                 multipliers.push(item);
                 continue;
             }
 
-            multipliers.push(...getBlockMultipliers(item.numerator),
-                ...getBlockMultipliers(item.denomerator));
+            multipliers.push(...item.numerator.getMultipliers(), ...item.denomerator.getMultipliers());
         }
 
         return multipliers;
     };
 
-    this._removeExtraBlocks = function(start = 0, end = this.content.length) {
+    this.removeExtraBlocks = function(start = 0, end = this.content.length) {
         let modified = false;
         for (let i = start; i < end; i ++) {
-            let term = this.content[i];
-            if (!(term instanceof Block)) continue;
+            let mult = this.content[i];
+            if (!(mult instanceof Block)) continue;
 
-            if (term.content.length == 1) {
-                this.content.splice(this.content.indexOf(term), 1, ...term.content[0].content);
+            if (mult.content.length == 1) {
+                this.content.splice(this.content.indexOf(mult), 1, ...mult.content[0].content);
+                if (mult.content[0].sign == "-") this.changeSign();
                 modified = true;
             }
         }
@@ -54,6 +40,11 @@ function Term(content, sign = "+") {
     };
 
     this.mul = function(...items) {
+        if (this._isFraction()) {
+            this._fractionMul(...items);
+            return;
+        }
+
         for (let item of items) {
             if (item instanceof Term) {
                 this.content.push(...item.content);
@@ -65,7 +56,30 @@ function Term(content, sign = "+") {
         }
     };
 
+    this._fractionMul = function(...items) {
+        let numerator = this.content[0].numerator;
+        let denomerator = this.content[0].denomerator;
+
+        for (let item of items) {
+            if (item instanceof Term) {
+                if (item.sign == "-") {
+                    this.changeSign();
+                }
+                this._fractionMul(...item.content);
+            } else if (item instanceof Frac) {
+                numerator.content[0].content.push(item.numerator);
+                denomerator.content[0].content.push(item.denomerator);
+            } else {
+                numerator.content[0].content.push(item);
+            }
+        }
+
+        numerator.content[0].removeExtraBlocks();
+        denomerator.content[0].removeExtraBlocks();
+    };
+
     this.devide = function(...items) {
+        let wasFrac = this._isFraction();
         this.transformToFrac();
 
         let numerator = this.content[0].numerator;
@@ -85,10 +99,10 @@ function Term(content, sign = "+") {
             }
         }
 
-        numerator.content[0]._removeExtraBlocks();
-        denomerator.content[0]._removeExtraBlocks();
+        numerator.content[0].removeExtraBlocks();
+        denomerator.content[0].removeExtraBlocks();
 
-        if (denomerator.toTex() === "1") {
+        if ((!wasFrac && denomerator.toTex() === "1") || denomerator.content[0].content.length == 0) {
             this.content = numerator.content[0];
         }
     };
@@ -107,12 +121,8 @@ function Term(content, sign = "+") {
                 numerator.content[0].content.push(item);
             }
         }
-        numerator.content[0]._removeExtraBlocks();
-        denomerator.content[0]._removeExtraBlocks();
-
-        if (!denomerator.content[0].content.length) {
-            denomerator.content[0].content.push(new Num(1));
-        }
+        numerator.content[0].removeExtraBlocks();
+        denomerator.content[0].removeExtraBlocks();
 
         this.content = [new Frac(numerator, denomerator)];
     };
@@ -130,7 +140,7 @@ function Term(content, sign = "+") {
                 continue;
             }
 
-            item.denomerator.content[0]._removeExtraBlocks();
+            item.denomerator.content[0].removeExtraBlocks();
             item.denomerator.content[0].content.forEach((elem)=>{
                 let newStruct;
                 if (elem instanceof SupSub) {
@@ -142,7 +152,7 @@ function Term(content, sign = "+") {
                 this.content.push(newStruct);
             });
         }
-        this._removeExtraBlocks();
+        this.removeExtraBlocks();
     };
 
     this.toTex = function() {
@@ -198,7 +208,7 @@ function Term(content, sign = "+") {
     };
 
     this.simplify = function() {
-        this._removeExtraBlocks();
+        this.removeExtraBlocks();
         this._removeFractions();
         this._createPowers();
         this._convertNegativePowers();
@@ -213,15 +223,15 @@ function Term(content, sign = "+") {
         this.mergeNumbers();
 
         if (this._isFraction()) {
-            this.content[0].numerator._removeExtraBlocks();
-            this.content[0].denomerator._removeExtraBlocks();
+            this.content[0].numerator.removeExtraBlocks();
+            this.content[0].denomerator.removeExtraBlocks();
 
             if (this.content[0].denomerator.toTex()=="1") {
                 this.content = [this.content[0].numerator];
             }
         }
 
-        this._removeExtraBlocks();
+        this.removeExtraBlocks();
     };
 
     this._createPowers = function() {
@@ -245,7 +255,7 @@ function Term(content, sign = "+") {
     };
 
     this.deleteNumbers = function() {
-        this._removeExtraBlocks();
+        this.removeExtraBlocks();
 
         let prod = 1;
 
@@ -265,7 +275,7 @@ function Term(content, sign = "+") {
     };
 
     this.deleteNumbersDeep = function() {
-        this._removeExtraBlocks();
+        this.removeExtraBlocks();
 
         let denomProd = 1;
         let numProd = 1;
