@@ -1,3 +1,20 @@
+class MathStructure {
+    constructor() {
+        if (this.constructor == MathStructure) {
+            throw new Error(" Object of Abstract Class cannot be created");
+        }
+    }
+
+    isEqual() {
+        throw new Error("Abstract Method isEqual has no implementation");
+    }
+
+    toTex() {
+        throw new Error("Abstract Method toTex has no implementation");
+    }
+}
+
+
 function getMathStructure(elem) {
     if (elem.classList.contains(classNames.variable) || elem.tagName === "VAR") {
         return Variable.fromHTML(elem);
@@ -17,52 +34,61 @@ function getMathStructure(elem) {
     } else throw new Error("Unknown structure");
 }
 
-function Frac(numerator, denomerator) {
-    this.numerator = numerator; // [block]
-    this.denomerator = denomerator; // [block]
 
-    this.toTex = function() {
+class Frac extends MathStructure {
+    constructor(numerator, denomerator) {
+        super();
+        this.numerator = numerator; // [block]
+        this.denomerator = denomerator; // [block]
+    }
+    toTex() {
         return `\\frac{${this.numerator.toTex()}}{${this.denomerator.toTex()}}`;
-    };
+    }
 
-    this.isEqual = function(other) {
+    isEqual(other) {
         if (!(other instanceof Frac)) return false;
 
         return this.numerator.isEqual(other.numerator) && this.denomerator.isEqual(other.denomerator);
-    };
+    }
 
-    this.invert = function() {
+    invert() {
         [this.numerator, this.denomerator] = [this.denomerator, this.numerator];
-    };
+    }
 
-    this.copy = function() {
+    copy() {
         return new Frac(this.numerator.copy(), this.denomerator.copy());
-    };
+    }
 }
 
 
-function Sqrt(content, root = Block.wrap(new Num(2))) {
-    this.root = root; // [block] or 2
-    this.content = content; // [block]
+class Sqrt extends MathStructure {
+    constructor(content, root = Block.wrap(new Num(2))) {
+        super();
+        this.root = root; // [block] or 2
+        this.content = content; // [block]
+    }
 
-    this.toTex = function() {
-        return `\\sqrt${ this.root.toTex() === "2"? "": `[${this.root.toTex()}]` }{${this.content.toTex()}}`;
-    };
+    toTex() {
+        return `\\sqrt${this.root.toTex() === "2" ? "" : `[${this.root.toTex()}]`}{${this.content.toTex()}}`;
+    }
 
-    this.isEqual = function(other) {
+    isEqual(other) {
         if (!(other instanceof Sqrt)) return false;
 
         return this.root.isEqual(other.root) && this.content.isEqual(other.content);
-    };
+    }
 }
 
 
-function SupSub(base, upperIndex = null, lowerIndex = null) {
-    this.base = base;
-    this.upperIndex = upperIndex;
-    this.lowerIndex = lowerIndex;
+class SupSub extends MathStructure {
+    constructor(base, upperIndex = null, lowerIndex = null) {
+        super();
+        this.base = base;
+        this.upperIndex = upperIndex;
+        this.lowerIndex = lowerIndex;
+    }
 
-    this.toTex = function() {
+    toTex() {
         let str = this.base.toTex();
         if (this.lowerIndex) {
             if (this.lowerIndex.toTex().length == 1) {
@@ -79,77 +105,85 @@ function SupSub(base, upperIndex = null, lowerIndex = null) {
             }
         }
         return str;
-    };
+    }
 
-    this.isEqual = function(other) {
-        if (!(other instanceof SupSub)) return false;
+    isEqual(other) {
+        if (!(other instanceof SupSub)) false;
 
         return this.lowerIndex.isEqual(other.lowerIndex) && this.upperIndex.isEqual(other.upperIndex) &&
             this.base.isEqual(other.base);
-    };
+    }
+
+    // returns [base, power] of any structure
+    static getPower(structure) {
+        if (structure instanceof SupSub) {
+            return [structure.base, structure.upperIndex];
+        }
+
+        return [structure, Block.wrap(new Num(1))];
+    }
 }
 
 
-// returns [base, power] of any structure
-SupSub.getPower = function(structure) {
-    if (structure instanceof SupSub) {
-        return [structure.base, structure.upperIndex];
+class Variable extends MathStructure {
+    constructor(name) {
+        super();
+        this.name = name; // [string]
     }
 
-    return [structure, Block.wrap(new Num(1))];
-};
-
-
-function Variable(name) {
-    this.name = name; // [string]
-
-    this.toTex = function() {
+    toTex() {
         return this.name;
-    };
+    }
 
-    this.isEqual = function(other) {
+    isEqual(other) {
         if (!(other instanceof Variable)) return false;
 
         return this.name === other.name;
-    };
+    }
 }
 
 
-function Func(name, content) {
-    this.name = name; // function name like "log", "sin" ...
-    this.content = content; // block
+class Func extends MathStructure {
+    constructor(name, content) {
+        super();
+        this.name = name; // function name like "log", "sin" ...
+        this.content = content; // block
+    }
 
-    this.toTex = function() {
+    toTex() {
         return `\\${this.name} ${this.content.toTex()}`;
-    };
+    }
 
-    this.isEqual = function(other) {
+    isEqual(other) {
         if (!(other instanceof Func)) return false;
 
         return this.name === other.name && this.content.isEqual(other.content);
-    };
+    }
 }
 
 
-function Num(number) {
-    this.value = Number(number);
+class Num extends MathStructure {
+    constructor(number) {
+        super();
+        this.value = Number(number);
 
-    if (this.value < 0) {
-        throw new Error("Number must be >= 0");
+        if (this.value < 0) {
+            throw new Error("Number must be >= 0");
+        }
     }
 
-    this.valueOf = function() {
-        return this.value;
-    };
-
-    this.toTex = function() {
+    toTex() {
         return String(this.value);
-    };
+    }
 
-    this.isEqual = function(other) {
+    isEqual(other) {
         if (!(other instanceof Num)) return false;
 
         return this.value === other.value;
-    };
+    }
+
+    valueOf() {
+        return this.value;
+    }
 }
 
