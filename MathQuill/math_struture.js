@@ -40,14 +40,6 @@ function Frac(numerator, denomerator) {
     };
 }
 
-Frac.fromHTML = function(elem) {
-    let frac = new Frac(Block.fromHTML(childrenQuerySelector(elem, "." + classNames.numerator)),
-        Block.fromHTML(childrenQuerySelector(elem, "." + classNames.denomerator)));
-
-    frac.HTMLElement = elem;
-    return frac;
-};
-
 
 function Sqrt(content, root = Block.wrap(new Num(2))) {
     this.root = root; // [block] or 2
@@ -63,19 +55,6 @@ function Sqrt(content, root = Block.wrap(new Num(2))) {
         return this.root.isEqual(other.root) && this.content.isEqual(other.content);
     };
 }
-
-Sqrt.fromHTML = function(elem) {
-    let root = Block.wrap(new Num(2));
-
-    if (elem.classList.contains(classNames.selectable)) {
-        root = Block.fromHTML(elem.firstChild);
-        elem = elem.lastChild;
-    }
-
-    sqrt = new Sqrt(Block.fromHTML(elem.lastChild), root);
-    sqrt.HTMLElement = elem;
-    return sqrt;
-};
 
 
 function SupSub(base, upperIndex = null, lowerIndex = null) {
@@ -110,15 +89,6 @@ function SupSub(base, upperIndex = null, lowerIndex = null) {
     };
 }
 
-SupSub.fromHTML = function(elem) {
-    let sup = childrenQuerySelector(elem.lastChild, "." + classNames.upperIndex);
-    let sub = childrenQuerySelector(elem.lastChild, "." + classNames.lowerIndex);
-
-    let subsub = new SupSub(getMathStructure(elem.firstChild), sup ? Block.fromHTML(sup) : null,
-        sub ? Block.fromHTML(sub) : null);
-    subsub.HTMLElement = elem;
-    return subsub;
-};
 
 // returns [base, power] of any structure
 SupSub.getPower = function(structure) {
@@ -144,12 +114,6 @@ function Variable(name) {
     };
 }
 
-Variable.fromHTML = function(elem) {
-    let variable = new Variable(elem.innerText);
-    variable.HTMLElement = elem;
-    return variable;
-};
-
 
 function Func(name, content) {
     this.name = name; // function name like "log", "sin" ...
@@ -165,12 +129,6 @@ function Func(name, content) {
         return this.name === other.name && this.content.isEqual(other.content);
     };
 }
-
-Func.fromHTML = function(elem) {
-    let func = new Func(elem.firstChild.innerText, getMathStructure(elem.lastChild));
-    func.HTMLElement = elem;
-    return func;
-};
 
 
 function Num(number) {
@@ -195,8 +153,3 @@ function Num(number) {
     };
 }
 
-Num.fromHTML = function(elem) {
-    let number = new Num(elem.innerText);
-    number.HTMLElement = elem;
-    return number;
-};
