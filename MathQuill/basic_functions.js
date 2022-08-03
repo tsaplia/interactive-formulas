@@ -37,6 +37,7 @@ const interactiveFieldFunctions = {
     t: "separateTerm",
     m: "separateMultiplier",
     o: "openBrackets",
+    p: "substitute",
 };
 
 function mark(root, className, selector, reducer) {

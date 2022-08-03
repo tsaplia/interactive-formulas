@@ -126,7 +126,7 @@ function Term(content, sign = "+") {
             this.content.splice(i, 1, item.numerator);
 
             if (item.denomerator.content.length > 1) {
-                this.content.push(new SupSub(item.denomerator,upperIndex = Block.wrap(new Num(1), "-")));
+                this.content.push(new SupSub(item.denomerator, upperIndex = Block.wrap(new Num(1), "-")));
                 continue;
             }
 
@@ -167,7 +167,7 @@ function Term(content, sign = "+") {
         }
 
         for (let i = 0; i < this.content.length; i++) {
-            if (!this.content[i].isEqual(other.content[i])) return false;
+            if (this.content[i] != other.content[i] && !this.content[i].isEqual(other.content[i])) return false;
         }
 
         return true;
