@@ -120,7 +120,7 @@ Block.prototype.subtract = function(...items) {
             newItem.changeSign();
             this.add(newItem);
         } else if (item instanceof Block) {
-            this.subtract(item.content);
+            this.subtract(...item.content);
         } else {
             throw new Error(`Can\`t add ${item.constructor.name} to Block`);
         }

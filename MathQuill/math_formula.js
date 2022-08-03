@@ -221,3 +221,33 @@ Formula.prototype.substituteMultiplier = function(mult, term, otherFormula) {
     return this._copyWithModifiedPart(part, term);
 };
 
+
+Formula.prototype.add = function(...formulas) {
+    let leftPart = this.leftPart().copy();
+    let rightPart = this.rightPart().copy();
+
+    for (let formula of formulas) {
+        leftPart.add(formula.leftPart());
+        rightPart.add(formula.rightPart());
+    }
+
+    leftPart.simplify();
+    rightPart.simplify();
+
+    return new Formula([leftPart, rightPart]);
+};
+
+
+Formula.prototype.subtract = function(formula) {
+    let leftPart = this.leftPart().copy();
+    let rightPart = this.rightPart().copy();
+
+    leftPart.subtract(formula.leftPart());
+    rightPart.subtract(formula.rightPart());
+
+    leftPart.simplify();
+    rightPart.simplify();
+
+    return new Formula([leftPart, rightPart]);
+};
+

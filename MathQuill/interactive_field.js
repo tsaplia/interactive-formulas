@@ -160,7 +160,7 @@ InteractiveField.prototype.formulaHandler = function(formula) {
         event.clickDescription.formula = formula;
 
         if (event.clickDescription.element == formula && this._isActive(formula)) {
-            this.deleteActive();
+            this.deleteActive(formula);
             return;
         }
 
@@ -213,6 +213,27 @@ InteractiveField.prototype.substitute = function() {
             this.active[1].term, this.active[0].formula);
     } else return;
 
+    this.insertContent(createFormula(newFormula.toTex()));
+};
+
+
+InteractiveField.prototype.addEquations = function() {
+    for (let item of this.active) {
+        if (this._getActiveType(item.element) != this._activeTypes.formula) return;
+    }
+
+    let newFormula = this.active[0].element.add(...this.active.slice(1).map((value) => value.element));
+    this.insertContent(createFormula(newFormula.toTex()));
+};
+
+
+InteractiveField.prototype.subtractEquations = function() {
+    if (this.active.length != 2) return;
+    for (let item of this.active) {
+        if (this._getActiveType(item.element) != this._activeTypes.formula) return;
+    }
+
+    let newFormula = this.active[0].element.subtract(this.active[1].element);
     this.insertContent(createFormula(newFormula.toTex()));
 };
 

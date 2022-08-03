@@ -198,10 +198,6 @@ Term.prototype.deleteNumbers = function() {
         }
     }
 
-    if (!this.content.length) {
-        this.content.push(new Num(1));
-    }
-
     return prod;
 };
 
@@ -234,7 +230,8 @@ Term.prototype.deleteNumbersDeep = function() {
 
 
 Term.prototype.mergeNumbers = function() {
-    this.insertCoef(...this.deleteNumbersDeep());
+    let coef = this.deleteNumbersDeep();
+    this.insertCoef(coef[0] / gcd(...coef), coef[1] / gcd(...coef));
     this.emptyContentCheck();
 };
 
@@ -244,10 +241,10 @@ Term.prototype.insertCoef = function(numProd, denomProd) {
 
     if (this._isFraction()) {
         if (numProd != 1) {
-            this.content[0].numerator.content[0].unshift(new Num(numProd));
+            this.content[0].numerator.content[0].content.unshift(new Num(numProd));
         }
         if (denomProd != 1) {
-            this.content[0].denomerator.content[0].unshift(new Num(denomProd));
+            this.content[0].denomerator.content[0].content.unshift(new Num(denomProd));
         }
     } else {
         if (denomProd == 1) {
@@ -410,7 +407,7 @@ Term.prototype.emptyContentCheck = function() {
 };
 
 
-Term.prototype._isFraction = function(){
-    return this.content.length == 1 && this.content[0] instanceof Frac
+Term.prototype._isFraction = function() {
+    return this.content.length == 1 && this.content[0] instanceof Frac;
 };
 
