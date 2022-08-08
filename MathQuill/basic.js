@@ -20,6 +20,10 @@ const interactiveFieldFunctions = {
 };
 
 
+/**
+ * @param {string} latex 
+ * @returns {HTMLDivElement}
+ */
 function createFormula(latex) {
     let elem = document.createElement("div");
     elem.className = "formula";
@@ -30,6 +34,11 @@ function createFormula(latex) {
 }
 
 
+/**
+ * @param {number} a 
+ * @param {number} b 
+ * @returns {number}
+ */
 function gcd(a, b) {
     a = Math.abs(a);
     b = Math.abs(b);
@@ -43,6 +52,11 @@ function gcd(a, b) {
 }
 
 
+/**
+ * @param {Array<number>} a 
+ * @param {Array<number>} b 
+ * @returns {Array<number>}
+ */
 function addFractions(a, b) {
     if (!(a instanceof Array) && !a.size() == 2 && !(b instanceof Array) && !b.size() == 2) {
         throw new Error("Arguments should be Array of length 2");

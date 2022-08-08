@@ -1,6 +1,7 @@
 class Formula extends MathStructure {
     constructor(equalityParts) {
         super();
+        /** @type {Array<Block>} */
         this.equalityParts = equalityParts;
     }
 
@@ -18,15 +19,26 @@ class Formula extends MathStructure {
         return new Formula(this.equalityParts.map((part) => part.copy()));
     }
 
+    /**
+     * @returns {Block}
+     */
     leftPart() {
         return this.equalityParts[0];
     }
 
+    /**
+     * @returns {Block}
+     */
     rightPart() {
         return this.equalityParts.slice(-1)[0];
     }
 
-    isSeparatedTerm(term = null) {
+    /**
+     * 
+     * @param {Term?} [term] 
+     * @returns {boolean}
+     */
+    isSeparatedTerm(term) {
         let f = this.leftPart().content.length == 1 && this.leftPart().content[0].sign == "+";
         if (term && this.leftPart().content[0] != term) {
             f = false;
@@ -34,7 +46,11 @@ class Formula extends MathStructure {
         return f;
     }
 
-    isSeparatedMultiplier(mult = null) {
+    /**
+     * @param {MathStructure?} [mult]  
+     * @returns {boolean}
+     */
+    isSeparatedMultiplier(mult) {
         let f = this.isSeparatedTerm() && this.leftPart().content[0].allMultipliers().length == 1 &&
             !(this.leftPart().content[0].content[0] instanceof Block);
         if (mult && this.leftPart().content[0].content[0] != mult) {
@@ -43,6 +59,10 @@ class Formula extends MathStructure {
         return f;
     }
 
+    /**
+     * @param {Term} term 
+     * @returns {Block}
+     */
     _getActivePart(term) {
         if (this.leftPart().content.includes(term)) return this.leftPart();
 
@@ -50,9 +70,13 @@ class Formula extends MathStructure {
             return this.rightPart();
         }
 
-        throw new Error();
+        throw new Error("Term is not from this formula");
     }
 
+    /**
+     * @param {Term} term 
+     * @returns {Block}
+     */
     _getPassivePart(term) {
         if (this.leftPart().content.includes(term)) {
             return this.rightPart();
@@ -63,6 +87,11 @@ class Formula extends MathStructure {
         throw new Error();
     }
 
+    /**
+     * @param {Block} part 
+     * @param {Term} term 
+     * @returns {Formula}
+     */
     _copyWithModifiedPart(part, term) {
         if (this._getActivePart(term) == this.rightPart()) {
             return new Formula([this.leftPart(), part]);
@@ -71,6 +100,10 @@ class Formula extends MathStructure {
         return new Formula([part, this.rightPart().copy()]);
     }
 
+    /**
+     * @param {Term} term 
+     * @returns {Formula}
+     */
     separateTerm(term) {
         let activePart = this._getActivePart(term);
         let passivePart = this._getPassivePart(term);
@@ -98,6 +131,11 @@ class Formula extends MathStructure {
         return new Formula([leftPart, rightPart]);
     }
 
+    /**
+     * @param {MathStructure} mult 
+     * @param {Term} term 
+     * @returns {Formula}
+     */
     separateMultiplier(mult, term) {
         let leftPart;
         let rightPart;
@@ -146,6 +184,11 @@ class Formula extends MathStructure {
         return new Formula([leftPart, rightPart]);
     }
 
+    /**
+     * @param {Block} block 
+     * @param {Term} term 
+     * @returns {Formula}
+     */
     openBrackets(block, term) {
         let part = this._getActivePart(term).copy();
 
@@ -169,6 +212,11 @@ class Formula extends MathStructure {
         return this._copyWithModifiedPart(part, term);
     }
 
+    /**
+     * @param {Term} term 
+     * @param {Formula} otherFormula 
+     * @returns {Formula}
+     */
     substituteTerm(term, otherFormula) {
         let part = this._getActivePart(term).copy();
         for (let i = 0; i < part.content.length; i++) {
@@ -183,6 +231,12 @@ class Formula extends MathStructure {
         return this._copyWithModifiedPart(part, term);
     }
 
+    /**
+     * @param {MathStructure} mult 
+     * @param {Term} term 
+     * @param {Formula} otherFormula 
+     * @returns {Formula}
+     */
     substituteMultiplier(mult, term, otherFormula) {
         let part = this._getActivePart(term).copy();
 
@@ -235,6 +289,10 @@ class Formula extends MathStructure {
         return this._copyWithModifiedPart(part, term);
     }
 
+    /**
+     * @param  {...Formula} formulas 
+     * @returns {Formula}
+     */
     add(...formulas) {
         let leftPart = this.leftPart().copy();
         let rightPart = this.rightPart().copy();
@@ -250,6 +308,10 @@ class Formula extends MathStructure {
         return new Formula([leftPart, rightPart]);
     }
 
+    /**
+     * @param {Formula} formula 
+     * @returns {Formula}
+     */
     subtract(formula) {
         let leftPart = this.leftPart().copy();
         let rightPart = this.rightPart().copy();
@@ -263,6 +325,10 @@ class Formula extends MathStructure {
         return new Formula([leftPart, rightPart]);
     }
 
+    /**
+     * @param {Formula} formula 
+     * @returns {Formula}
+     */
     divide(formula) {
         let leftPart = this.leftPart().copy();
         let rightPart = this.rightPart().copy();

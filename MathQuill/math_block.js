@@ -1,7 +1,9 @@
 class Block extends MathStructure {
     constructor(content) {
         super();
-        this.content = content; // arrey of terms
+
+        /** @type {Array<Term>} */
+        this.content = content; // inner terms of block 
     }
 
     toTex() {
@@ -37,6 +39,9 @@ class Block extends MathStructure {
         return true;
     }
 
+    /**
+     * @returns {Block} copy of current block and all inner terms
+     */
     copy() {
         return new Block(this.content.map((term) => term.copy()));
     }
@@ -77,6 +82,10 @@ class Block extends MathStructure {
         this._removeZeroTerms();
     }
 
+    /**
+     * remove all plus-terms with only block multiplier
+     * @returns {boolean} was block content modified
+     */
     removeExtraBlocks() {
         let modified = false;
         for (let term of this.content) {
@@ -89,6 +98,9 @@ class Block extends MathStructure {
         return modified;
     }
 
+    /**
+     * Remove all inner terms that are equal to 0
+     */
     _removeZeroTerms() {
         for (let i = 0; i < this.content.length; i++) {
             if (this.content[i].getRatio()[0] == 0) {
@@ -102,6 +114,10 @@ class Block extends MathStructure {
         }
     }
 
+    /**
+     * Add terms/block to block
+     * @param  {...Block | Term} items 
+     */
     add(...items) {
         for (let item of items) {
             if (item instanceof Term) {
@@ -114,6 +130,9 @@ class Block extends MathStructure {
         }
     }
 
+    /**
+     * @param  {...Block | Term} items 
+     */
     subtract(...items) {
         for (let item of items) {
             if (item instanceof Term) {
@@ -128,6 +147,9 @@ class Block extends MathStructure {
         }
     }
 
+    /**
+     * Change signes of all inner terms
+     */
     changeSignes() {
         this.content = this.content.map((term) => term.copy());
         this.content.forEach((term) => term.changeSign());
@@ -145,6 +167,11 @@ class Block extends MathStructure {
         return multipliers;
     }
 
+    /**
+     * @param {MathStructure} struct structure for wrapping
+     * @param {string} [sign="+"] sign of wrapping term
+     * @returns {Block} struct wrapped in a block 
+     */
     static wrap(struct, sign = "+") {
         if (struct instanceof Term) {
             return new Block([struct]);

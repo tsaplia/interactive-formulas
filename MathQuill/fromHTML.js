@@ -22,7 +22,9 @@ const classNames = {
     equalityPart: "equality-part",
 };
 
-
+/**
+ * @param {HTMLElement} root 
+ */
 function prepareHTML(root) {
     let cursor = root.querySelector(".mq-cursor");
     if (cursor) cursor.parentElement.removeChild(cursor);
@@ -52,6 +54,12 @@ function prepareHTML(root) {
 }
 
 
+/**
+ * @param {HTMLElement} root 
+ * @param {string} className 
+ * @param {string} selector 
+ * @param {Function} reducer 
+ */
 function mark(root, className, selector, reducer) {
     let selected = root.querySelectorAll(selector);
     for (let elem of selected) {
@@ -61,7 +69,12 @@ function mark(root, className, selector, reducer) {
     }
 }
 
-
+/**
+ * @param {HTMLElement} root 
+ * @param {string} groupName 
+ * @param {Function} startCondition 
+ * @param {Function} continueCondition 
+ */
 function groupByCondition(root, groupName, startCondition, continueCondition = startCondition) {
     let current = root.firstChild;
     while (current) {
@@ -75,7 +88,12 @@ function groupByCondition(root, groupName, startCondition, continueCondition = s
     }
 }
 
-
+/**
+ * @param {HTMLElement} startElement 
+ * @param {string} groupName 
+ * @param {Function} condition 
+ * @returns {HTMLSpanElement}
+ */
 function _groupNext(startElement, groupName, condition) {
     let group = wrap(startElement, groupName);
 
@@ -88,6 +106,11 @@ function _groupNext(startElement, groupName, condition) {
 }
 
 
+/**
+ * @param {HTMLElement} root 
+ * @param {string} selector 
+ * @param {string} groupName 
+ */
 function groupWithNextSibling(root, selector, groupName) {
     for (let elem of root.querySelectorAll(selector)) {
         let group = wrap(elem, groupName);
@@ -96,6 +119,11 @@ function groupWithNextSibling(root, selector, groupName) {
 }
 
 
+/**
+ * @param {HTMLElement} root 
+ * @param {string} selector 
+ * @param {string} groupName 
+ */
 function groupWithPreviousSibling(root, selector, groupName) {
     for (let elem of root.querySelectorAll(selector)) {
         let group = wrap(elem.previousElementSibling, groupName);
@@ -104,6 +132,11 @@ function groupWithPreviousSibling(root, selector, groupName) {
 }
 
 
+/**
+ * @param {HTMLElement} root 
+ * @param {string} className 
+ * @returns {HTMLSpanElement}
+ */
 function wrap(root, className = "") {
     let newGroup = document.createElement("span");
     newGroup.className = className;
@@ -114,6 +147,9 @@ function wrap(root, className = "") {
 }
 
 
+/**
+ * @param {HTMLElement} root 
+ */
 function makeTermsGroup(root) {
     let blocks = root.querySelectorAll(`[mathquill-block-id], .${classNames.equalityPart}`);
 
@@ -134,6 +170,9 @@ function makeTermsGroup(root) {
 }
 
 
+/**
+ * @param {HTMLElement} root 
+ */
 function makeEqualityParts(root) {
     let group = wrap(root.firstChild, classNames.equalityPart);
     let next = group.nextElementSibling;
@@ -148,6 +187,11 @@ function makeEqualityParts(root) {
 }
 
 
+/**
+ * @param {HTMLElement} root 
+ * @param {string} selector 
+ * @returns {HTMLElement?}
+ */
 function childrenQuerySelector(root, selector) {
     for (let child of root.children) {
         if (child.matches(selector)) {

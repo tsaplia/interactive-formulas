@@ -15,6 +15,10 @@ class MathStructure {
 }
 
 
+/**
+ * @param {HTMLElement} elem 
+ * @returns {MathStructure}
+ */
 function getMathStructure(elem) {
     if (elem.classList.contains(classNames.variable) || elem.tagName === "VAR") {
         return Variable.fromHTML(elem);
@@ -38,8 +42,12 @@ function getMathStructure(elem) {
 class Frac extends MathStructure {
     constructor(numerator, denomerator) {
         super();
-        this.numerator = numerator; // [block]
-        this.denomerator = denomerator; // [block]
+
+        /** @type {Block} */
+        this.numerator = numerator;
+
+        /** @type {Block} */
+        this.denomerator = denomerator; 
     }
     toTex() {
         return `\\frac{${this.numerator.toTex()}}{${this.denomerator.toTex()}}`;
@@ -64,7 +72,11 @@ class Frac extends MathStructure {
 class Sqrt extends MathStructure {
     constructor(content, root = Block.wrap(new Num(2))) {
         super();
-        this.root = root; // [block] or 2
+
+        /** @type {Block} */
+        this.root = root; 
+
+        /** @type {Block} */
         this.content = content; // [block]
     }
 
@@ -83,8 +95,14 @@ class Sqrt extends MathStructure {
 class SupSub extends MathStructure {
     constructor(base, upperIndex = null, lowerIndex = null) {
         super();
+
+        /** @type {Term} */
         this.base = base;
+
+        /** @type {Block} */
         this.upperIndex = upperIndex;
+
+        /** @type {Block} */
         this.lowerIndex = lowerIndex;
     }
 
@@ -114,7 +132,10 @@ class SupSub extends MathStructure {
             this.base.isEqual(other.base);
     }
 
-    // returns [base, power] of any structure
+    /**
+     * @param {MathStructure} structure 
+     * @returns {Array<Term | Block>}
+     */
     static getPower(structure) {
         if (structure instanceof SupSub) {
             return [structure.base, structure.upperIndex];
@@ -128,7 +149,9 @@ class SupSub extends MathStructure {
 class Variable extends MathStructure {
     constructor(name) {
         super();
-        this.name = name; // [string]
+
+        /** @type {string} */
+        this.name = name; 
     }
 
     toTex() {
@@ -146,8 +169,12 @@ class Variable extends MathStructure {
 class Func extends MathStructure {
     constructor(name, content) {
         super();
+
+        /** @type {string} */
         this.name = name; // function name like "log", "sin" ...
-        this.content = content; // block
+
+        /** @type {Block} */
+        this.content = content; // function argument
     }
 
     toTex() {
@@ -165,6 +192,8 @@ class Func extends MathStructure {
 class Num extends MathStructure {
     constructor(number) {
         super();
+
+        /** @type {number} */
         this.value = Number(number);
 
         if (this.value < 0) {
