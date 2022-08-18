@@ -142,20 +142,13 @@ class Formula extends MathStructure {
         [leftPart, rightPart] = this.separateTerm(term).equalityParts;
 
         if (rightPart.content.length > 1) {
-            rightPart = Block.wrap(new Frac(rightPart, Block.wrap(new Num(1))));
+            rightPart = Block.wrap(rightPart);
         }
 
         leftPart.content[0].transformToFrac();
-        if (leftPart.content[0].content[0].denomerator.content.length > 1) {
-            leftPart.content[0].content[0].denomerator =
-                Block.wrap(leftPart.content[0].content[0].denomerator);
-        }
-        if (leftPart.content[0].content[0].numerator.content.length > 1) {
-            leftPart.content[0].content[0].numerator = Block.wrap(leftPart.content[0].content[0].numerator);
-        }
 
         let inverted = false;
-        for (let item of leftPart.content[0].content[0].denomerator.content[0].content) {
+        for (let item of leftPart.content[0].content[0].denomerator.content) {
             if (item === mult) {
                 inverted = true;
                 continue;
@@ -163,14 +156,16 @@ class Formula extends MathStructure {
 
             rightPart.content[0].mul(item);
         }
+        if(leftPart.content[0].content[0].denomerator.sign == "-") rightPart.content[0].changeSign();
 
-        for (let item of leftPart.content[0].content[0].numerator.content[0].content) {
+        for (let item of leftPart.content[0].content[0].numerator.content) {
             if (item === mult) {
                 continue;
             }
 
             rightPart.content[0].devide(item);
         }
+        if(leftPart.content[0].content[0].numerator.sign == "-") rightPart.content[0].changeSign();
 
         if (inverted) {
             rightPart.content[0].content[0].invert();
@@ -208,6 +203,7 @@ class Formula extends MathStructure {
 
             part.content.splice(i, 1, ...newTerms);
         }
+        part.simplify();
 
         return this._copyWithModifiedPart(part, term);
     }
@@ -227,6 +223,7 @@ class Formula extends MathStructure {
             part.content.splice(i, 1, ...otherFormula.rightPart().copy().content);
             break;
         }
+        part.simplify();
 
         return this._copyWithModifiedPart(part, term);
     }
@@ -234,57 +231,56 @@ class Formula extends MathStructure {
     /**
      * @param {MathStructure} mult 
      * @param {Term} term 
-     * @param {Formula} otherFormula 
+     * @param {Formula} otherFormula //formula withseparated multiplier
      * @returns {Formula}
      */
     substituteMultiplier(mult, term, otherFormula) {
         let part = this._getActivePart(term).copy();
 
         let newTerm = term.copy();
+        let inserted = otherFormula.rightPart().content.length == 1 ? 
+            otherFormula.rightPart().content[0]: new Term([otherFormula.rightPart()]);
+            
         for (let i = 0; i < newTerm.content.length; i++) {
             let item = newTerm.content[i];
-
+            // for not fraction mult
             if (item == mult) {
-                newTerm.content.splice(i, 1, otherFormula.rightPart());
+                newTerm.content.splice(i, 1, ...inserted.content);
                 newTerm.removeExtraBlocks();
+                if(inserted.sign == "-") newTerm.changeSign();
                 break;
             }
-            if (!(item instanceof Frac) || !(item.numerator.getMultipliers().includes(mult) ||
-                item.denomerator.getMultipliers().includes(mult))) {
-                continue;
-            }
 
+            if (!(item instanceof Frac) || !(item.numerator.allMultipliers().includes(mult) ||
+                item.denomerator.allMultipliers().includes(mult))) continue;
+
+            // for fraction mult
             let frac = item.copy();
             let wrap = new Term([frac]);
 
-            if (frac.numerator.content[0].content.includes(mult)) {
-                frac.numerator.content[0].content.splice(frac.numerator.content[0].content.indexOf(mult), 1);
-                wrap.mul(otherFormula.rightPart());
+            if (frac.numerator.content.includes(mult)) {
+                frac.numerator.content.splice(frac.numerator.content.indexOf(mult), 1);
+                wrap.mul(inserted);
             }
-
-            if (frac.denomerator.content[0].content.includes(mult)) {
-                frac.denomerator.content[0].content.splice(frac.numerator.content[0].content.indexOf(mult), 1);
-                wrap.devide(otherFormula.rightPart());
+            if (frac.denomerator.content.includes(mult)) {
+                frac.denomerator.content.splice(frac.numerator.content.indexOf(mult), 1);
+                wrap.devide(inserted);
             }
-
             frac.denomerator.removeExtraBlocks();
             frac.numerator.removeExtraBlocks();
 
             newTerm.content.splice(i, 1, wrap.content[0]);
-            if (wrap.sign == "-") {
-                newTerm.changeSign();
-            }
+            if (wrap.sign == "-") newTerm.changeSign();
             break;
         }
 
         for (let i = 0; i < part.content.length; i++) {
-            if (!part.content[i].isEqual(term)) {
-                continue;
+            if (part.content[i].isEqual(term)) {
+                part.content.splice(i, 1, newTerm);
+                break;
             }
-
-            part.content.splice(i, 1, newTerm);
-            break;
         }
+        part.simplify();
 
         return this._copyWithModifiedPart(part, term);
     }

@@ -5,10 +5,16 @@ class MathStructure {
         }
     }
 
+    /**
+     * @returns {boolean}
+     */
     isEqual() {
         throw new Error("Abstract Method isEqual has no implementation");
     }
 
+    /**
+     * @returns {string}
+     */
     toTex() {
         throw new Error("Abstract Method toTex has no implementation");
     }
@@ -43,14 +49,26 @@ class Frac extends MathStructure {
     constructor(numerator, denomerator) {
         super();
 
-        /** @type {Block} */
+        /** @type {Term} */
         this.numerator = numerator;
 
-        /** @type {Block} */
+        /** @type {Term} */
         this.denomerator = denomerator; 
     }
     toTex() {
-        return `\\frac{${this.numerator.toTex()}}{${this.denomerator.toTex()}}`;
+        let num = new Block([this.numerator]).toTex();
+        let denom = new Block([this.denomerator]).toTex();
+
+        if(this.numerator.content.length == 1 && this.numerator.sign == "+" && 
+            this.numerator.content[0] instanceof Block){
+                num = this.numerator.content[0].toTex()
+        }
+        if(this.denomerator.content.length == 1 && this.denomerator.sign == "+" && 
+            this.denomerator.content[0] instanceof Block){
+                denom = this.denomerator.content[0].toTex()
+        }
+        
+        return `\\frac{${num}}{${denom}}`;
     }
 
     isEqual(other) {
@@ -96,7 +114,7 @@ class SupSub extends MathStructure {
     constructor(base, upperIndex = null, lowerIndex = null) {
         super();
 
-        /** @type {Term} */
+        /** @type {MathStructure} */
         this.base = base;
 
         /** @type {Block} */
@@ -108,6 +126,10 @@ class SupSub extends MathStructure {
 
     toTex() {
         let str = this.base.toTex();
+        if(this.base instanceof Block){
+            str = "\\left("+str+"\\right)";
+        }
+
         if (this.lowerIndex) {
             if (this.lowerIndex.toTex().length == 1) {
                 str += `_${this.lowerIndex.toTex()}`;
@@ -128,7 +150,8 @@ class SupSub extends MathStructure {
     isEqual(other) {
         if (!(other instanceof SupSub)) false;
 
-        return this.lowerIndex.isEqual(other.lowerIndex) && this.upperIndex.isEqual(other.upperIndex) &&
+        return ((!this.lowerIndex && !other.lowerIndex) ||  this.lowerIndex.isEqual(other.lowerIndex)) &&
+            ((!this.upperIndex && !other.upperIndex) ||  this.upperIndex.isEqual(other.upperIndex)) &&
             this.base.isEqual(other.base);
     }
 
@@ -178,7 +201,7 @@ class Func extends MathStructure {
     }
 
     toTex() {
-        return `\\${this.name} ${this.content.toTex()}`;
+        return `\\${this.name}\\left(${this.content.toTex()}\\right)`;
     }
 
     isEqual(other) {

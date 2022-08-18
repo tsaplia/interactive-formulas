@@ -256,8 +256,15 @@ Term.fromHTML = function(elem) {
 
 
 Frac.fromHTML = function(elem) {
-    let frac = new Frac(Block.fromHTML(childrenQuerySelector(elem, "." + classNames.numerator)),
-        Block.fromHTML(childrenQuerySelector(elem, "." + classNames.denomerator)));
+    let num_block = childrenQuerySelector(elem, "." + classNames.numerator);
+    let denom_block = childrenQuerySelector(elem, "." + classNames.denomerator);
+
+    let numerator = num_block.childElementCount > 1 ? 
+        new Term([Block.fromHTML(num_block)]) : Term.fromHTML(num_block.firstChild);
+    let denomerator = denom_block.childElementCount > 1 ?
+        new Term([Block.fromHTML(denom_block)]) : Term.fromHTML(denom_block.firstChild)
+
+    let frac = new Frac(numerator, denomerator);
 
     frac.HTMLElement = elem;
     return frac;
@@ -272,7 +279,7 @@ Sqrt.fromHTML = function(elem) {
         elem = elem.lastChild;
     }
 
-    sqrt = new Sqrt(Block.fromHTML(elem.lastChild), root);
+    let sqrt = new Sqrt(Block.fromHTML(elem.lastChild), root);
     sqrt.HTMLElement = elem;
     return sqrt;
 };

@@ -65,8 +65,9 @@ function addFractions(a, b) {
     let num = a[0]*b[1] + b[0]*a[1];
     let denom = b[1]*a[1];
 
-    num /= gcd(num, denom);
-    denom /= gcd(num, denom);
+    let g = gcd(num, denom);
+    num /= g;
+    denom /= g;
 
     if (denom<0) {
         num *= -1;

@@ -48,6 +48,9 @@ class Block extends MathStructure {
 
     simplify() {
         this.removeExtraBlocks();
+        for(let term of this.content){
+            term.simplify();
+        }
 
         for (let i = 0; i < this.content.length; i++) {
             for (let j = i + 1; j < this.content.length; j++) {
@@ -68,6 +71,9 @@ class Block extends MathStructure {
 
                 let newTerm = this.content[i].copy();
                 newTerm.deleteNumbersDeep();
+                newTerm.emptyContentCheck();
+                newTerm._removeEmptyDenom();
+                newTerm.deleteNumbers();
 
                 newTerm.insertCoef(Math.abs(sumRatio[0]), sumRatio[1]);
                 newTerm.emptyContentCheck();
@@ -153,18 +159,6 @@ class Block extends MathStructure {
     changeSignes() {
         this.content = this.content.map((term) => term.copy());
         this.content.forEach((term) => term.changeSign());
-    }
-
-    getMultipliers() {
-        let multipliers = [];
-
-        if (this.content.length == 1) {
-            multipliers.push(...this.content[0].content);
-        } else {
-            multipliers.push(this);
-        }
-
-        return multipliers;
     }
 
     /**

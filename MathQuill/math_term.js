@@ -62,8 +62,8 @@ class Term extends MathStructure {
 
         proto.transformToFrac();
         proto.deleteNumbersDeep();
-        proto.content[0].numerator.content[0]._sort();
-        proto.content[0].denomerator.content[0]._sort();
+        proto.content[0].numerator._sort();
+        proto.content[0].denomerator._sort();
 
         return proto;
     }
@@ -77,8 +77,8 @@ class Term extends MathStructure {
         if (!this._isFraction()) {
             this._removeExtraPowers();
         } else {
-            this.content[0].numerator.content[0]._removeExtraPowers();
-            this.content[0].denomerator.content[0]._removeExtraPowers();
+            this.content[0].numerator._removeExtraPowers();
+            this.content[0].denomerator._removeExtraPowers();
         }
 
         this.mergeNumbers();
@@ -87,9 +87,7 @@ class Term extends MathStructure {
             this.content[0].numerator.removeExtraBlocks();
             this.content[0].denomerator.removeExtraBlocks();
 
-            if (this.content[0].denomerator.toTex() == "1") {
-                this.content = [this.content[0].numerator];
-            }
+            this._removeEmptyDenom();
         }
 
         this.removeExtraBlocks();
@@ -101,15 +99,10 @@ class Term extends MathStructure {
 
             if (!(item instanceof Frac)) continue;
 
-            this.content.splice(i, 1, item.numerator);
-
-            if (item.denomerator.content.length > 1) {
-                this.content.push(new SupSub(item.denomerator, upperIndex = Block.wrap(new Num(1), "-")));
-                continue;
-            }
-
-            item.denomerator.content[0].removeExtraBlocks();
-            item.denomerator.content[0].content.forEach((elem) => {
+            this.content.splice(i, 1, ...item.numerator.content);
+            
+            item.denomerator.removeExtraBlocks();
+            item.denomerator.content.forEach((elem) => {
                 let newStruct;
                 if (elem instanceof SupSub) {
                     newStruct = new SupSub(elem.base, elem.upperIndex.copy());
@@ -119,6 +112,9 @@ class Term extends MathStructure {
                 }
                 this.content.push(newStruct);
             });
+
+            if(item.numerator.sign == "-") this.changeSign();
+            if(item.denomerator.sign == "-") this.changeSign();
         }
         this.removeExtraBlocks();
     }
@@ -174,7 +170,7 @@ class Term extends MathStructure {
         }
 
         if (denomerator.content.length > 0) {
-            this.content = [new Frac(new Block([numerator]), new Block([denomerator]))];
+            this.content = [new Frac(numerator, denomerator)];
         } else {
             this.content = numerator.content;
         }
@@ -219,16 +215,13 @@ class Term extends MathStructure {
                 numProd *= this.content[i].value;
                 this.content.splice(i, 1);
                 i--;
+                continue;
             }
             if (!(this.content[i] instanceof Frac)) continue;
 
             this.content[i] = this.content[i].copy();
-            if (this.content[i].numerator.content.length == 1) {
-                numProd *= this.content[i].numerator.content[0].deleteNumbers();
-            }
-            if (this.content[i].numerator.content.length == 1) {
-                denomProd *= this.content[i].denomerator.content[0].deleteNumbers();
-            }
+            numProd *= this.content[i].numerator.deleteNumbers();
+            denomProd *= this.content[i].denomerator.deleteNumbers();
         }
 
         return [numProd, denomProd];
@@ -249,16 +242,16 @@ class Term extends MathStructure {
 
         if (this._isFraction()) {
             if (numProd != 1) {
-                this.content[0].numerator.content[0].content.unshift(new Num(numProd));
+                this.content[0].numerator.content.unshift(new Num(numProd));
             }
             if (denomProd != 1) {
-                this.content[0].denomerator.content[0].content.unshift(new Num(denomProd));
+                this.content[0].denomerator.content.unshift(new Num(denomProd));
             }
         } else {
             if (denomProd == 1) {
                 this.content.unshift(new Num(numProd));
             } else {
-                this.content.unshift(new Frac(Block.wrap(new Num(numProd)), Block.wrap(new Num(denomProd))));
+                this.content.unshift(new Frac( new Term([new Num(numProd)]), new Term([new Num(denomProd)]) ));
             }
         }
     }
@@ -271,7 +264,6 @@ class Term extends MathStructure {
     }
 
     /**
-     * 
      * @param {number} start 
      * @param {number} end 
      * @returns {boolean}
@@ -280,16 +272,26 @@ class Term extends MathStructure {
         let modified = false;
         for (let i = start; i < end; i++) {
             let mult = this.content[i];
-            if (!(mult instanceof Block)) continue;
+            if (!(mult instanceof Block) || mult.content.length != 1) continue;
 
-            if (mult.content.length == 1) {
-                this.content.splice(this.content.indexOf(mult), 1, ...mult.content[0].content);
-                if (mult.content[0].sign == "-") this.changeSign();
-                modified = true;
-            }
+            this.content.splice(this.content.indexOf(mult), 1, ...mult.content[0].content);
+            if (mult.content[0].sign == "-") this.changeSign();
+            modified = true;
         }
 
         return modified;
+    }
+
+    _removeEmptyDenom(){
+        for(let i=0; i<this.content.length; i++){
+            if(!(this.content[i] instanceof Frac) || 
+                !this.content[i].denomerator.isEqual(new Term([new Num(1)]))) continue;
+            
+            if(this.content[i].denomerator.sign == "-") this.changeSign();
+            let insertedMults = this.content[i].numerator.content;
+            this.content.splice(i,1, ...insertedMults);
+            i += insertedMults.length - 1;
+        }
     }
 
     /**
@@ -318,12 +320,6 @@ class Term extends MathStructure {
     _fractionMul(...items) {
         this.content[0] = this.content[0].copy();
 
-        let numerator = this.content[0].numerator;
-        let denomerator = this.content[0].denomerator;
-
-        if (numerator.content.length > 1) this.content[0].numerator = Block.wrap(numerator);
-        if (denomerator.content.length > 1) this.content[0].denomerator = Block.wrap(denomerator);
-
         for (let item of items) {
             if (item instanceof Term) {
                 if (item.sign == "-") {
@@ -331,17 +327,12 @@ class Term extends MathStructure {
                 }
                 this._fractionMul(...item.content);
             } else if (item instanceof Frac) {
-                numerator.content[0].content.push(item.numerator); // //////////////////////
-                denomerator.content[0].content.push(item.denomerator); // ///////////////////
+                this.mul(item.numerator);
+                this.devide(item.denomerator);
             } else {
-                numerator.content[0].content.push(item);
+                this.content[0].numerator.content.push(item);
             }
         }
-
-        numerator.content[0].removeExtraBlocks();
-        denomerator.content[0].removeExtraBlocks();
-        numerator.removeExtraBlocks();
-        denomerator.removeExtraBlocks();
     }
 
     /**
@@ -355,12 +346,6 @@ class Term extends MathStructure {
             this.transformToFrac();
         }
 
-        let numerator = this.content[0].numerator;
-        let denomerator = this.content[0].denomerator;
-
-        if (numerator.content.length > 1) this.content[0].numerator = Block.wrap(numerator);
-        if (denomerator.content.length > 1) this.content[0].denomerator = Block.wrap(denomerator);
-
         for (let item of items) {
             if (item instanceof Term) {
                 if (item.sign == "-") {
@@ -368,20 +353,15 @@ class Term extends MathStructure {
                 }
                 this.devide(...item.content);
             } else if (item instanceof Frac) {
-                denomerator.content[0].content.push(item.numerator); // ///////////////////
-                numerator.content[0].content.push(item.denomerator); // ///////////////////
+                this.devide(item.numerator);
+                this.mul(item.denomerator);
             } else {
-                denomerator.content[0].content.push(item);
+                this.content[0].denomerator.content.push(item);
             }
         }
 
-        numerator.content[0].removeExtraBlocks();
-        denomerator.content[0].removeExtraBlocks();
-        numerator.removeExtraBlocks();
-        denomerator.removeExtraBlocks();
-
-        if (denomerator.content[0].content.length && !wasFrac && denomerator.toTex() === "1") {
-            this.content = numerator.content[0];
+        if (!wasFrac) {
+            this._removeEmptyDenom();
         }
     }
 
@@ -396,12 +376,11 @@ class Term extends MathStructure {
         let multipliers = [];
 
         for (let item of this.content) {
-            if (!(item instanceof Frac)) {
+            if (item instanceof Frac) {
+                multipliers.push(...item.numerator.content, ...item.denomerator.content);
+            }else{
                 multipliers.push(item);
-                continue;
             }
-
-            multipliers.push(...item.numerator.getMultipliers(), ...item.denomerator.getMultipliers());
         }
 
         return multipliers;
@@ -410,34 +389,37 @@ class Term extends MathStructure {
     transformToFrac() {
         if (this._isFraction()) return;
 
-        let denomerator = new Block([new Term([])]);
-        let numerator = new Block([new Term([])]);
+        let denomerator = new Term([]);
+        let numerator = new Term([]);
 
         for (let item of this.content) {
             if (item instanceof Frac) {
-                denomerator.content[0].content.push(item.denomerator);
-                numerator.content[0].content.push(item.numerator);
+                denomerator.content.push(...item.denomerator.content);
+                numerator.content.push(...item.numerator.content);
+
+                if(item.numerator.sign == "-") this.changeSign();
+                if(item.denomerator.sign == "-") this.changeSign();
             } else {
-                numerator.content[0].content.push(item);
+                numerator.content.push(item);
             }
         }
-        numerator.content[0].removeExtraBlocks();
-        denomerator.content[0].removeExtraBlocks();
 
         this.content = [new Frac(numerator, denomerator)];
     }
 
     emptyContentCheck() {
-        if (this._isFraction()) {
-            if (!this.content[0].numerator.content[0].content.length) {
-                this.content[0].numerator.content[0].content.push(new Num(1));
+        if (!this.content.length) {
+            this.content.push(new Num(1));
+            return;
+        }
+        for(let i=0; i<this.content.length; i++){
+            if(!(this.content[i] instanceof Frac)) continue;
+
+            if (!this.content[i].numerator.content.length) {
+                this.content[i].numerator.content.push(new Num(1));
             }
-            if (!this.content[0].denomerator.content[0].content.length) {
-                this.content[0].denomerator.content[0].content.push(new Num(1));
-            }
-        } else {
-            if (!this.content.length) {
-                this.content.push(new Num(1));
+            if (!this.content[i].denomerator.content.length) {
+                this.content[i].denomerator.content.push(new Num(1));
             }
         }
     }
