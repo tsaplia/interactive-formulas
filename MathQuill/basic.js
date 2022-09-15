@@ -9,6 +9,19 @@ const specialSymbols = {
     },
 };
 
+const availibleLetters = [
+    "Delta", "alpha", "beta", "gamma", "delta", "zeta",
+    "eta", "theta", "iota", "kappa", "lambda", "mu",
+    "nu", "pi", "rho", "sigma", "tau", "upsilon",
+    "chichi", "varepsilon", "vartheta", "varphi",
+    "infin",
+];
+
+const availibleMathFunc = [
+    "sin", "cos", "tan", "ctg",
+    "arcsin", "arccos", "arctan", "arcctg",
+];
+
 const interactiveFieldFunctions = {
     t: "separateTerm",
     m: "separateMultiplier",
@@ -16,13 +29,13 @@ const interactiveFieldFunctions = {
     p: "substitute",
     a: "addEquations",
     s: "subtractEquations",
-    d: "divideEquations"
+    d: "divideEquations",
 };
 
 
 /**
- * @param {string} latex 
- * @returns {HTMLDivElement}
+ * @param {string} latex
+ * @return {HTMLDivElement}
  */
 function createFormula(latex) {
     let elem = document.createElement("div");
@@ -35,9 +48,9 @@ function createFormula(latex) {
 
 
 /**
- * @param {number} a 
- * @param {number} b 
- * @returns {number}
+ * @param {number} a
+ * @param {number} b
+ * @return {number}
  */
 function gcd(a, b) {
     a = Math.abs(a);
@@ -53,9 +66,9 @@ function gcd(a, b) {
 
 
 /**
- * @param {Array<number>} a 
- * @param {Array<number>} b 
- * @returns {Array<number>}
+ * @param {Array<number>} a
+ * @param {Array<number>} b
+ * @return {Array<number>}
  */
 function addFractions(a, b) {
     if (!(a instanceof Array) && !a.size() == 2 && !(b instanceof Array) && !b.size() == 2) {

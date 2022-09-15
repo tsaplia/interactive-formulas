@@ -13,8 +13,8 @@ const classNames = {
     sqrtBase: "mq-nthroot",
     selectable: "select-group",
     variable: "variable",
-    indices: "mq-supsub",
-    upperIndex: "mq-sup",
+    indices: "mq-Power",
+    exponent: "mq-sup",
     lowerIndex: "mq-sub",
     breacker: "breacker",
     vector: "mq-vector-prefix",
@@ -23,7 +23,7 @@ const classNames = {
 };
 
 /**
- * @param {HTMLElement} root 
+ * @param {HTMLElement} root
  */
 function prepareHTML(root) {
     let cursor = root.querySelector(".mq-cursor");
@@ -55,10 +55,10 @@ function prepareHTML(root) {
 
 
 /**
- * @param {HTMLElement} root 
- * @param {string} className 
- * @param {string} selector 
- * @param {Function} reducer 
+ * @param {HTMLElement} root
+ * @param {string} className
+ * @param {string} selector
+ * @param {Function} reducer
  */
 function mark(root, className, selector, reducer) {
     let selected = root.querySelectorAll(selector);
@@ -70,10 +70,10 @@ function mark(root, className, selector, reducer) {
 }
 
 /**
- * @param {HTMLElement} root 
- * @param {string} groupName 
- * @param {Function} startCondition 
- * @param {Function} continueCondition 
+ * @param {HTMLElement} root
+ * @param {string} groupName
+ * @param {Function} startCondition
+ * @param {Function} continueCondition
  */
 function groupByCondition(root, groupName, startCondition, continueCondition = startCondition) {
     let current = root.firstChild;
@@ -89,10 +89,10 @@ function groupByCondition(root, groupName, startCondition, continueCondition = s
 }
 
 /**
- * @param {HTMLElement} startElement 
- * @param {string} groupName 
- * @param {Function} condition 
- * @returns {HTMLSpanElement}
+ * @param {HTMLElement} startElement
+ * @param {string} groupName
+ * @param {Function} condition
+ * @return {HTMLSpanElement}
  */
 function _groupNext(startElement, groupName, condition) {
     let group = wrap(startElement, groupName);
@@ -107,9 +107,9 @@ function _groupNext(startElement, groupName, condition) {
 
 
 /**
- * @param {HTMLElement} root 
- * @param {string} selector 
- * @param {string} groupName 
+ * @param {HTMLElement} root
+ * @param {string} selector
+ * @param {string} groupName
  */
 function groupWithNextSibling(root, selector, groupName) {
     for (let elem of root.querySelectorAll(selector)) {
@@ -120,9 +120,9 @@ function groupWithNextSibling(root, selector, groupName) {
 
 
 /**
- * @param {HTMLElement} root 
- * @param {string} selector 
- * @param {string} groupName 
+ * @param {HTMLElement} root
+ * @param {string} selector
+ * @param {string} groupName
  */
 function groupWithPreviousSibling(root, selector, groupName) {
     for (let elem of root.querySelectorAll(selector)) {
@@ -133,9 +133,9 @@ function groupWithPreviousSibling(root, selector, groupName) {
 
 
 /**
- * @param {HTMLElement} root 
- * @param {string} className 
- * @returns {HTMLSpanElement}
+ * @param {HTMLElement} root
+ * @param {string} className
+ * @return {HTMLSpanElement}
  */
 function wrap(root, className = "") {
     let newGroup = document.createElement("span");
@@ -148,7 +148,7 @@ function wrap(root, className = "") {
 
 
 /**
- * @param {HTMLElement} root 
+ * @param {HTMLElement} root
  */
 function makeTermsGroup(root) {
     let blocks = root.querySelectorAll(`[mathquill-block-id], .${classNames.equalityPart}`);
@@ -171,7 +171,7 @@ function makeTermsGroup(root) {
 
 
 /**
- * @param {HTMLElement} root 
+ * @param {HTMLElement} root
  */
 function makeEqualityParts(root) {
     let group = wrap(root.firstChild, classNames.equalityPart);
@@ -188,9 +188,9 @@ function makeEqualityParts(root) {
 
 
 /**
- * @param {HTMLElement} root 
- * @param {string} selector 
- * @returns {HTMLElement?}
+ * @param {HTMLElement} root
+ * @param {string} selector
+ * @return {HTMLElement?}
  */
 function childrenQuerySelector(root, selector) {
     for (let child of root.children) {
@@ -259,10 +259,10 @@ Frac.fromHTML = function(elem) {
     let num_block = childrenQuerySelector(elem, "." + classNames.numerator);
     let denom_block = childrenQuerySelector(elem, "." + classNames.denomerator);
 
-    let numerator = num_block.childElementCount > 1 ? 
+    let numerator = num_block.childElementCount > 1 ?
         new Term([Block.fromHTML(num_block)]) : Term.fromHTML(num_block.firstChild);
     let denomerator = denom_block.childElementCount > 1 ?
-        new Term([Block.fromHTML(denom_block)]) : Term.fromHTML(denom_block.firstChild)
+        new Term([Block.fromHTML(denom_block)]) : Term.fromHTML(denom_block.firstChild);
 
     let frac = new Frac(numerator, denomerator);
 
@@ -285,11 +285,11 @@ Sqrt.fromHTML = function(elem) {
 };
 
 
-SupSub.fromHTML = function(elem) {
-    let sup = childrenQuerySelector(elem.lastChild, "." + classNames.upperIndex);
+Power.fromHTML = function(elem) {
+    let sup = childrenQuerySelector(elem.lastChild, "." + classNames.exponent);
     let sub = childrenQuerySelector(elem.lastChild, "." + classNames.lowerIndex);
 
-    let subsub = new SupSub(getMathStructure(elem.firstChild), sup ? Block.fromHTML(sup) : null,
+    let subsub = new Power(getMathStructure(elem.firstChild), sup ? Block.fromHTML(sup) : null,
         sub ? Block.fromHTML(sub) : null);
     subsub.HTMLElement = elem;
     return subsub;
@@ -316,3 +316,26 @@ Num.fromHTML = function(elem) {
     return number;
 };
 
+
+/**
+ * @param {HTMLElement} elem
+ * @return {MathStructure}
+ */
+function getMathStructure(elem) {
+    if (elem.classList.contains(classNames.variable) || elem.tagName === "VAR") {
+        return Variable.fromHTML(elem);
+    } else if (elem.classList.contains(classNames.number)) {
+        return Num.fromHTML(elem);
+    } else if (elem.classList.contains(classNames.fraction)) {
+        return Frac.fromHTML(elem);
+    } else if (elem.classList.contains(classNames.function)) {
+        return Func.fromHTML(elem);
+    } else if (elem.firstChild.classList.contains(classNames.paren)) {
+        return Block.fromHTML(elem.firstChild.nextElementSibling);
+    } else if (elem.lastChild.classList.contains(classNames.sqrtContent) ||
+        elem.firstChild.classList.contains(classNames.sqrtBase)) {
+        return Sqrt.fromHTML(elem);
+    } else if (elem.lastChild.classList.contains(classNames.indices)) {
+        return Power.fromHTML(elem);
+    } else throw new Error("Unknown structure");
+}

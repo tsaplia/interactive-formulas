@@ -6,44 +6,19 @@ class MathStructure {
     }
 
     /**
-     * @returns {boolean}
+     * @return {boolean}
      */
     isEqual() {
         throw new Error("Abstract Method isEqual has no implementation");
     }
 
     /**
-     * @returns {string}
+     * @return {string}
      */
     toTex() {
         throw new Error("Abstract Method toTex has no implementation");
     }
 }
-
-
-/**
- * @param {HTMLElement} elem 
- * @returns {MathStructure}
- */
-function getMathStructure(elem) {
-    if (elem.classList.contains(classNames.variable) || elem.tagName === "VAR") {
-        return Variable.fromHTML(elem);
-    } else if (elem.classList.contains(classNames.number)) {
-        return Num.fromHTML(elem);
-    } else if (elem.classList.contains(classNames.fraction)) {
-        return Frac.fromHTML(elem);
-    } else if (elem.classList.contains(classNames.function)) {
-        return Func.fromHTML(elem);
-    } else if (elem.firstChild.classList.contains(classNames.paren)) {
-        return Block.fromHTML(elem.firstChild.nextElementSibling);
-    } else if (elem.lastChild.classList.contains(classNames.sqrtContent) ||
-        elem.firstChild.classList.contains(classNames.sqrtBase)) {
-        return Sqrt.fromHTML(elem);
-    } else if (elem.lastChild.classList.contains(classNames.indices)) {
-        return SupSub.fromHTML(elem);
-    } else throw new Error("Unknown structure");
-}
-
 
 class Frac extends MathStructure {
     constructor(numerator, denomerator) {
@@ -53,21 +28,21 @@ class Frac extends MathStructure {
         this.numerator = numerator;
 
         /** @type {Term} */
-        this.denomerator = denomerator; 
+        this.denomerator = denomerator;
     }
     toTex() {
         let num = new Block([this.numerator]).toTex();
         let denom = new Block([this.denomerator]).toTex();
 
-        if(this.numerator.content.length == 1 && this.numerator.sign == "+" && 
-            this.numerator.content[0] instanceof Block){
-                num = this.numerator.content[0].toTex()
+        if (this.numerator.content.length == 1 && this.numerator.sign == "+" &&
+            this.numerator.content[0] instanceof Block) {
+            num = this.numerator.content[0].toTex();
         }
-        if(this.denomerator.content.length == 1 && this.denomerator.sign == "+" && 
-            this.denomerator.content[0] instanceof Block){
-                denom = this.denomerator.content[0].toTex()
+        if (this.denomerator.content.length == 1 && this.denomerator.sign == "+" &&
+            this.denomerator.content[0] instanceof Block) {
+            denom = this.denomerator.content[0].toTex();
         }
-        
+
         return `\\frac{${num}}{${denom}}`;
     }
 
@@ -92,14 +67,17 @@ class Sqrt extends MathStructure {
         super();
 
         /** @type {Block} */
-        this.root = root; 
+        this.root = root;
 
-        /** @type {Block} */
-        this.content = content; // [block]
+        /** @type {MathStructure} */
+        this.content = content; //
     }
 
     toTex() {
-        return `\\sqrt${this.root.toTex() === "2" ? "" : `[${this.root.toTex()}]`}{${this.content.toTex()}}`;
+        let content = this.content.toTex();
+        if (this.content instanceof Block) content = `(${content})`;
+
+        return `\\sqrt${this.root.toTex() === "2" ? "" : `[${this.root.toTex()}]`}{${content}}`;
     }
 
     isEqual(other) {
@@ -110,58 +88,47 @@ class Sqrt extends MathStructure {
 }
 
 
-class SupSub extends MathStructure {
-    constructor(base, upperIndex = null, lowerIndex = null) {
+class Power extends MathStructure {
+    constructor(base, exponent = null) {
         super();
 
         /** @type {MathStructure} */
         this.base = base;
 
         /** @type {Block} */
-        this.upperIndex = upperIndex;
-
-        /** @type {Block} */
-        this.lowerIndex = lowerIndex;
+        this.exponent = exponent;
     }
 
     toTex() {
         let str = this.base.toTex();
-        if(this.base instanceof Block){
+        if (this.base instanceof Block) {
             str = "\\left("+str+"\\right)";
         }
 
-        if (this.lowerIndex) {
-            if (this.lowerIndex.toTex().length == 1) {
-                str += `_${this.lowerIndex.toTex()}`;
+        if (this.exponent) {
+            if (this.exponent.toTex().length == 1) {
+                str += `^${this.exponent.toTex()}`;
             } else {
-                str += `_{${this.lowerIndex.toTex()}}`;
-            }
-        }
-        if (this.upperIndex) {
-            if (this.upperIndex.toTex().length == 1) {
-                str += `^${this.upperIndex.toTex()}`;
-            } else {
-                str += `^{${this.upperIndex.toTex()}}`;
+                str += `^{${this.exponent.toTex()}}`;
             }
         }
         return str;
     }
 
     isEqual(other) {
-        if (!(other instanceof SupSub)) false;
+        if (!(other instanceof Power)) false;
 
-        return ((!this.lowerIndex && !other.lowerIndex) ||  this.lowerIndex.isEqual(other.lowerIndex)) &&
-            ((!this.upperIndex && !other.upperIndex) ||  this.upperIndex.isEqual(other.upperIndex)) &&
+        return ((!this.exponent && !other.exponent) || this.exponent.isEqual(other.exponent)) &&
             this.base.isEqual(other.base);
     }
 
     /**
-     * @param {MathStructure} structure 
-     * @returns {Array<Term | Block>}
+     * @param {MathStructure} structure
+     * @return {Array<Term | Block>}
      */
     static getPower(structure) {
-        if (structure instanceof SupSub) {
-            return [structure.base, structure.upperIndex];
+        if (structure instanceof Power) {
+            return [structure.base, structure.exponent];
         }
 
         return [structure, Block.wrap(new Num(1))];
@@ -170,11 +137,17 @@ class SupSub extends MathStructure {
 
 
 class Variable extends MathStructure {
-    constructor(name) {
+    constructor(name, index = null, vector = false) {
         super();
 
         /** @type {string} */
-        this.name = name; 
+        this.name = name;
+
+        /** @type {string} */
+        this.index = index;
+
+        /** @type {boolean} */
+        this.vector = vector;
     }
 
     toTex() {

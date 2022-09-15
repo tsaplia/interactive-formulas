@@ -1,10 +1,10 @@
 class Term extends MathStructure {
     constructor(content, sign = "+") {
         super();
-        /**@type {string} */
+        /** @type {string} */
         this.sign = sign; // plus(+) or minus(-)
 
-        /**@type {Array<MathStructure>} */
+        /** @type {Array<MathStructure>} */
         this.content = content; // inner multipliers
     }
 
@@ -24,26 +24,27 @@ class Term extends MathStructure {
         return str;
     }
 
-    /** @returns {Term} copy of term without copying multipliers*/
+    /** @return {Term} copy of term without copying multipliers*/
     copy() {
         return new Term([...this.content], this.sign);
     }
 
     isEqual(other) {
-        if (this.sign != other.sign || !(other instanceof Term) || this.content.length != other.content.length) {
-            return false;
-        }
+        if (this.sign != other.sign || !(other instanceof Term) ||
+            this.content.length != other.content.length) return false;
 
         for (let i = 0; i < this.content.length; i++) {
-            if (this.content[i] != other.content[i] && !this.content[i].isEqual(other.content[i])) return false;
+            if (this.content[i] != other.content[i] && !this.content[i].isEqual(other.content[i])) {
+                return false;
+            }
         }
 
         return true;
     }
 
     /**
-     * @param {MathStructure} other 
-     * @returns {boolean}
+     * @param {MathStructure} other
+     * @return {boolean}
      */
     isSame(other) {
         if (!(other instanceof Term)) return false;
@@ -55,7 +56,7 @@ class Term extends MathStructure {
     }
 
     /**
-     * @returns {Term}
+     * @return {Term}
      */
     _getComparativeProto() {
         let proto = new Term([...this.content]);
@@ -100,21 +101,21 @@ class Term extends MathStructure {
             if (!(item instanceof Frac)) continue;
 
             this.content.splice(i, 1, ...item.numerator.content);
-            
+
             item.denomerator.removeExtraBlocks();
             item.denomerator.content.forEach((elem) => {
                 let newStruct;
-                if (elem instanceof SupSub) {
-                    newStruct = new SupSub(elem.base, elem.upperIndex.copy());
-                    newStruct.upperIndex.changeSignes();
+                if (elem instanceof Power) {
+                    newStruct = new Power(elem.base, elem.exponent.copy());
+                    newStruct.exponent.changeSignes();
                 } else {
-                    newStruct = new SupSub(elem, Block.wrap(new Num(1), "-"));
+                    newStruct = new Power(elem, Block.wrap(new Num(1), "-"));
                 }
                 this.content.push(newStruct);
             });
 
-            if(item.numerator.sign == "-") this.changeSign();
-            if(item.denomerator.sign == "-") this.changeSign();
+            if (item.numerator.sign == "-") this.changeSign();
+            if (item.denomerator.sign == "-") this.changeSign();
         }
         this.removeExtraBlocks();
     }
@@ -125,8 +126,8 @@ class Term extends MathStructure {
         for (let i = 0; i < this.content.length - 1; i++) {
             let currrentBase; let nextBase; let currentPow; let nextPow;
 
-            [currrentBase, currentPow] = SupSub.getPower(this.content[i]);
-            [nextBase, nextPow] = SupSub.getPower(this.content[i + 1]);
+            [currrentBase, currentPow] = Power.getPower(this.content[i]);
+            [nextBase, nextPow] = Power.getPower(this.content[i + 1]);
 
             if (!currrentBase.isEqual(nextBase)) continue;
 
@@ -134,18 +135,18 @@ class Term extends MathStructure {
             sumPow.add(nextPow);
             sumPow.simplify();
 
-            this.content.splice(i, 2, new SupSub(currrentBase, sumPow));
+            this.content.splice(i, 2, new Power(currrentBase, sumPow));
             i--;
         }
     }
 
     _removeExtraPowers() {
         for (let i = 0; i < this.content.length; i++) {
-            if (!(this.content[i] instanceof SupSub)) continue;
+            if (!(this.content[i] instanceof Power)) continue;
 
-            if (this.content[i].upperIndex.toTex() == "1") {
+            if (this.content[i].exponent.toTex() == "1") {
                 this.content.splice(i, 1, this.content[i].base);
-            } else if (this.content[i].upperIndex.toTex() == "0" || this.content[i].base.toTex() == "1") {
+            } else if (this.content[i].exponent.toTex() == "0" || this.content[i].base.toTex() == "1") {
                 this.content.splice(i, 1, new Num(1));
             }
         }
@@ -156,10 +157,10 @@ class Term extends MathStructure {
         let numerator = new Term([]);
 
         for (let item of this.content) {
-            if (item instanceof SupSub && item.upperIndex.content[0].sign == "-") {
-                let newPower = item.upperIndex.copy();
+            if (item instanceof Power && item.exponent.content[0].sign == "-") {
+                let newPower = item.exponent.copy();
                 newPower.changeSignes();
-                denomerator.content.push(new SupSub(item.base, newPower));
+                denomerator.content.push(new Power(item.base, newPower));
             } else {
                 numerator.content.push(item);
             }
@@ -183,7 +184,7 @@ class Term extends MathStructure {
     }
 
     /**
-     * @returns {number}
+     * @return {number}
      */
     deleteNumbers() {
         this.removeExtraBlocks();
@@ -202,7 +203,7 @@ class Term extends MathStructure {
     }
 
     /**
-     * @returns {Array<number>}
+     * @return {Array<number>}
      */
     deleteNumbersDeep() {
         this.removeExtraBlocks();
@@ -234,8 +235,8 @@ class Term extends MathStructure {
     }
 
     /**
-     * @param {number} numProd 
-     * @param {number} denomProd 
+     * @param {number} numProd
+     * @param {number} denomProd
      */
     insertCoef(numProd, denomProd) {
         if (denomProd == 1 && numProd == 1) return;
@@ -251,22 +252,22 @@ class Term extends MathStructure {
             if (denomProd == 1) {
                 this.content.unshift(new Num(numProd));
             } else {
-                this.content.unshift(new Frac( new Term([new Num(numProd)]), new Term([new Num(denomProd)]) ));
+                this.content.unshift(new Frac( new Term([new Num(numProd)]), new Term([new Num(denomProd)])));
             }
         }
     }
 
     /**
-     * @returns {Array<number>}
+     * @return {Array<number>}
      */
     getRatio() {
         return this.copy().deleteNumbersDeep();
     }
 
     /**
-     * @param {number} start 
-     * @param {number} end 
-     * @returns {boolean}
+     * @param {number} start
+     * @param {number} end
+     * @return {boolean}
      */
     removeExtraBlocks(start = 0, end = this.content.length) {
         let modified = false;
@@ -282,20 +283,20 @@ class Term extends MathStructure {
         return modified;
     }
 
-    _removeEmptyDenom(){
-        for(let i=0; i<this.content.length; i++){
-            if(!(this.content[i] instanceof Frac) || 
+    _removeEmptyDenom() {
+        for (let i=0; i<this.content.length; i++) {
+            if (!(this.content[i] instanceof Frac) ||
                 !this.content[i].denomerator.isEqual(new Term([new Num(1)]))) continue;
-            
-            if(this.content[i].denomerator.sign == "-") this.changeSign();
+
+            if (this.content[i].denomerator.sign == "-") this.changeSign();
             let insertedMults = this.content[i].numerator.content;
-            this.content.splice(i,1, ...insertedMults);
+            this.content.splice(i, 1, ...insertedMults);
             i += insertedMults.length - 1;
         }
     }
 
     /**
-     * @param  {...MathStructure} items 
+     * @param  {...MathStructure} items
      */
     mul(...items) {
         if (this._isFraction()) {
@@ -315,7 +316,7 @@ class Term extends MathStructure {
     }
 
     /**
-     * @param  {...MathStructure} items 
+     * @param  {...MathStructure} items
      */
     _fractionMul(...items) {
         this.content[0] = this.content[0].copy();
@@ -336,7 +337,7 @@ class Term extends MathStructure {
     }
 
     /**
-     * @param  {...MathStructure} items 
+     * @param  {...MathStructure} items
      */
     devide(...items) {
         let wasFrac = this._isFraction();
@@ -370,7 +371,7 @@ class Term extends MathStructure {
     }
 
     /**
-     * @returns {Array{MathStructure}}
+     * @return {Array<MathStructure>}
      */
     allMultipliers() {
         let multipliers = [];
@@ -378,7 +379,7 @@ class Term extends MathStructure {
         for (let item of this.content) {
             if (item instanceof Frac) {
                 multipliers.push(...item.numerator.content, ...item.denomerator.content);
-            }else{
+            } else {
                 multipliers.push(item);
             }
         }
@@ -397,8 +398,8 @@ class Term extends MathStructure {
                 denomerator.content.push(...item.denomerator.content);
                 numerator.content.push(...item.numerator.content);
 
-                if(item.numerator.sign == "-") this.changeSign();
-                if(item.denomerator.sign == "-") this.changeSign();
+                if (item.numerator.sign == "-") this.changeSign();
+                if (item.denomerator.sign == "-") this.changeSign();
             } else {
                 numerator.content.push(item);
             }
@@ -412,8 +413,8 @@ class Term extends MathStructure {
             this.content.push(new Num(1));
             return;
         }
-        for(let i=0; i<this.content.length; i++){
-            if(!(this.content[i] instanceof Frac)) continue;
+        for (let i=0; i<this.content.length; i++) {
+            if (!(this.content[i] instanceof Frac)) continue;
 
             if (!this.content[i].numerator.content.length) {
                 this.content[i].numerator.content.push(new Num(1));
@@ -425,7 +426,7 @@ class Term extends MathStructure {
     }
 
     /**
-     * @returns {boolean}
+     * @return {boolean}
      */
     _isFraction() {
         return this.content.length == 1 && this.content[0] instanceof Frac;
