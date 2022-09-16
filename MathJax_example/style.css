@@ -4,10 +4,6 @@ input{
     box-sizing: border-box;
 }
 
-.katex .hide-tail{
-    z-index: -1;
-}
-
 .container{
     margin-bottom: 10px;
 }
@@ -17,9 +13,6 @@ input{
     margin: 0 auto;
 }
 
-.katex{
-    font-size: 2em
-}
 
 .input-form{
     height: 40px;
@@ -32,4 +25,5 @@ input{
 
 #output-field{
     height:80px;
+    font-size: 2em
 }
