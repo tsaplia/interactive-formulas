@@ -75,7 +75,6 @@ class Sqrt extends MathStructure {
 
     toTex() {
         let content = this.content.toTex();
-        if (this.content instanceof Block) content = `(${content})`;
 
         return `\\sqrt${this.root.toTex() === "2" ? "" : `[${this.root.toTex()}]`}{${content}}`;
     }
@@ -137,7 +136,7 @@ class Power extends MathStructure {
 
 
 class Variable extends MathStructure {
-    constructor(name, index = null, vector = false) {
+    constructor(name, index = null, vector = false, primeCount = 0) {
         super();
 
         /** @type {string} */
@@ -148,10 +147,21 @@ class Variable extends MathStructure {
 
         /** @type {boolean} */
         this.vector = vector;
+
+        /** @type {number} */
+        this.primeCount = primeCount;
     }
 
     toTex() {
-        return this.name;
+        let TeX = this.name;
+        for(let i=0; i<this.primeCount; i++) TeX+="'";
+        if(this.index) {
+            TeX += "_" + (this.index.length == 1 ? this.index: `{${this.index}}`)
+        }
+        if(this.vector){
+            TeX = `\\vec{${TeX}}`
+        }
+        return TeX
     }
 
     isEqual(other) {

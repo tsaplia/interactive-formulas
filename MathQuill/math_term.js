@@ -11,7 +11,7 @@ class Term extends MathStructure {
     toTex() {
         let str = "";
         for (let i = 0; i < this.content.length; i++) {
-            if (!isNaN(this.content[i].toTex()[0]) && i > 0) {
+            if (!isNaN(this.content[i].toTex()[0]) && !(this.content[i] instanceof Block) && i > 0) {
                 str += "\\cdot ";
             }
             if (this.content[i] instanceof Block) {
