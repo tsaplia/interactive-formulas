@@ -1,57 +1,10 @@
 const classNames = {
-    digit: "digit",
-    number: "digit-group",
-    letters: "mq-operator-name",
-    function: "function",
-    functionName: "mq-operator-name-group",
-    fraction: "mq-fraction",
-    numerator: "mq-numerator",
-    denomerator: "mq-denominator",
-    paren: "mq-paren",
-    operator: "mq-binary-operator",
-    sqrtContent: "mq-sqrt-stem",
-    sqrtBase: "mq-nthroot",
-    selectable: "select-group",
-    variable: "variable",
-    indices: "mq-Power",
-    exponent: "mq-sup",
-    lowerIndex: "mq-sub",
-    breacker: "breacker",
-    vector: "mq-vector-prefix",
-    term: "term",
-    equalityPart: "equality-part",
+    breacker: "in-pm",
+    function: "in-function",
+    term: "in-term",
+    formula: "in-formula",
+    equalityPart: "in-equality-part",
 };
-
-/**
- * @param {HTMLElement} root
- */
-function prepareHTML(root) {
-    let cursor = root.querySelector(".mq-cursor");
-    if (cursor) cursor.parentElement.removeChild(cursor);
-
-    makeEqualityParts(root);
-
-    // mark digits
-    mark(root, classNames.digit, ":not([class])", (elem) => !isNaN(elem.innerHTML) || elem.innerHTML==".");
-    // mark breackers
-    mark(root, classNames.breacker, "span", (el) => ["+", specialSymbols.minus.sym].includes(el.innerHTML));
-    // group digits to number
-    groupByCondition(root, classNames.number, (el) => el.classList.contains(classNames.digit));
-    // group letters to function
-    groupByCondition(root, classNames.functionName, (el) => el.classList.contains(classNames.letters));
-    // making variables
-    groupByCondition(root, classNames.variable,
-        (el) => el.matches(`var:not([class="${classNames.letters}"])`),
-        (el) => el.innerHTML == specialSymbols.prime.sym);
-
-    // group function
-    groupWithNextSibling(root, "." + classNames.functionName, classNames.function);
-    // make sqrt group with base
-    groupWithNextSibling(root, "." + classNames.sqrtBase, classNames.selectable);
-    // make subsub group
-    groupWithPreviousSibling(root, "." + classNames.indices, classNames.selectable);
-    makeTermsGroup(root);
-}
 
 
 /**
@@ -71,63 +24,17 @@ function mark(root, className, selector, reducer) {
 
 /**
  * @param {HTMLElement} root
- * @param {string} groupName
- * @param {Function} startCondition
- * @param {Function} continueCondition
  */
-function groupByCondition(root, groupName, startCondition, continueCondition = startCondition) {
-    let current = root.firstChild;
-    while (current) {
-        if (current.childElementCount >= 1) {
-            groupByCondition(current, groupName, startCondition, continueCondition);
-        } else if (startCondition(current)) {
-            current = _groupNext(current, groupName, continueCondition);
+function groupFunctionParts(root) {
+    let selected = root.querySelectorAll(".mi");
+    for (let elem of selected) {
+        if (!availibleMathFunc.includes(elem.innerHTML)) continue;
+
+        let group = wrap(elem, classNames.function);
+        if (!group.nextElementSibling.innerHTML) {
+            group.append(group.nextElementSibling);
         }
-
-        current = current.nextElementSibling;
-    }
-}
-
-/**
- * @param {HTMLElement} startElement
- * @param {string} groupName
- * @param {Function} condition
- * @return {HTMLSpanElement}
- */
-function _groupNext(startElement, groupName, condition) {
-    let group = wrap(startElement, groupName);
-
-    let next = group.nextElementSibling;
-    while (next && condition(next)) {
-        group.appendChild(next);
-        next = group.nextElementSibling;
-    }
-    return group;
-}
-
-
-/**
- * @param {HTMLElement} root
- * @param {string} selector
- * @param {string} groupName
- */
-function groupWithNextSibling(root, selector, groupName) {
-    for (let elem of root.querySelectorAll(selector)) {
-        let group = wrap(elem, groupName);
         group.appendChild(group.nextElementSibling);
-    }
-}
-
-
-/**
- * @param {HTMLElement} root
- * @param {string} selector
- * @param {string} groupName
- */
-function groupWithPreviousSibling(root, selector, groupName) {
-    for (let elem of root.querySelectorAll(selector)) {
-        let group = wrap(elem.previousElementSibling, groupName);
-        group.appendChild(elem);
     }
 }
 
@@ -149,193 +56,93 @@ function wrap(root, className = "") {
 
 /**
  * @param {HTMLElement} root
+ * @param {Formula} formula
  */
-function makeTermsGroup(root) {
-    let blocks = root.querySelectorAll(`[mathquill-block-id], .${classNames.equalityPart}`);
+InteractiveField.prototype.prepareHTML = function(root, formula) {
+    let content = root.querySelector(".mrow");
+    content.classList.add(classNames.formula);
 
-    for (let block of blocks) {
-        let group = wrap(block.firstChild, classNames.term);
+    // mark "+" and "-"
+    mark(content, classNames.breacker, ".mo", (e) => ["+", "−"].includes(e.innerHTML));
+    groupFunctionParts(content);
+
+    this.prepareEqualityParts(content, formula);
+    this.formulaHandler(formula, content);
+};
+
+
+/**
+ * @param {HTMLElement} root
+ * @param {Formula} formula
+ */
+InteractiveField.prototype.prepareEqualityParts = function(root, formula) {
+    let group = wrap(root.firstChild, classNames.equalityPart);
+    for (let i=0; i<formula.equalityParts.length; i++) {
         let next = group.nextElementSibling;
-
-        while (next) {
-            if (next.classList.contains(classNames.breacker)) {
-                group = wrap(next, classNames.term);
-            } else {
-                group.appendChild(next);
-            }
-
+        while (next && next.innerHTML != "=") {
+            group.appendChild(next);
             next = group.nextElementSibling;
         }
+        this.prepareTerms(group, formula.equalityParts[i]);
+
+        if (next) group = wrap(next.nextElementSibling, classNames.equalityPart);
     }
-}
+};
 
 
 /**
  * @param {HTMLElement} root
+ * @param {Block} block
  */
-function makeEqualityParts(root) {
-    let group = wrap(root.firstChild, classNames.equalityPart);
-    let next = group.nextElementSibling;
-    while (next) {
-        if (next.innerHTML == "=") {
-            group = wrap(next.nextElementSibling, classNames.equalityPart);
-        } else {
+InteractiveField.prototype.prepareTerms = function(root, block) {
+    let group = wrap(root.firstChild, classNames.term);
+    for (let i=0; i<block.content.length; i++) {
+        let next = group.nextElementSibling;
+        while (next && !next.classList.contains(classNames.breacker)) {
             group.appendChild(next);
+            next = group.nextElementSibling;
         }
-        next = group.nextElementSibling;
+        this.prepareMults(group, block.content[i]);
+        this.termHandler(block.content[i], group);
+
+        if (next) group = wrap(next, classNames.term);
     }
-}
+};
 
 
 /**
  * @param {HTMLElement} root
- * @param {string} selector
- * @return {HTMLElement?}
+ * @param {Term} term
  */
-function childrenQuerySelector(root, selector) {
-    for (let child of root.children) {
-        if (child.matches(selector)) {
-            return child;
+InteractiveField.prototype.prepareMults = function(root, term) {
+    for (let multInd=0, elemInd=0; multInd<term.content.length; multInd++, elemInd++) {
+        while (root.children[elemInd].classList.contains("mo")) elemInd++;
+
+        if (term.content[multInd] instanceof Frac) {
+            let num = root.children[elemInd].firstChild.firstChild.firstChild;
+            this.prepareFraction(num, term.content[multInd].numerator);
+            let denom = root.children[elemInd].firstChild.firstChild.nextSibling.firstChild;
+            this.prepareFraction(denom, term.content[multInd].denominator);
+        } else {
+            this.multiplierHandler(term.content[multInd], root.children[elemInd]);
         }
     }
-
-    return null;
-}
-
-
-Formula.fromHTML = function(elem) {
-    prepareHTML(elem.lastChild);
-
-    let equalityParts = [];
-
-    for (let part of elem.lastChild.children) {
-        if (part.innerHTML == "=") continue;
-
-        equalityParts.push(Block.fromHTML(part));
-    }
-
-    let formula = new Formula(equalityParts);
-    formula.HTMLElement = elem;
-    formula.TeX = elem.firstChild.innerHTML;
-    return formula;
-};
-
-
-Block.fromHTML = function(elem) {
-    let content = [];
-
-    for (let child of elem.children) {
-        content.push(Term.fromHTML(child));
-    }
-
-    let block = new Block(content);
-    block.HTMLElement = elem;
-    return block;
-};
-
-
-Term.fromHTML = function(elem) {
-    let content = [];
-    let sign = "+";
-
-    for (let child of elem.children) {
-        if (child.classList.contains(classNames.breacker)) {
-            sign = child.innerHTML.replace(specialSymbols.minus.sym, "-");
-            continue;
-        }
-
-        if (child.classList.contains(classNames.operator)) continue;
-
-        content.push(getMathStructure(child));
-    }
-
-    let term = new Term(content, sign);
-    term.HTMLElement = elem;
-    return term;
-};
-
-
-Frac.fromHTML = function(elem) {
-    let num_block = childrenQuerySelector(elem, "." + classNames.numerator);
-    let denom_block = childrenQuerySelector(elem, "." + classNames.denomerator);
-
-    let numerator = num_block.childElementCount > 1 ?
-        new Term([Block.fromHTML(num_block)]) : Term.fromHTML(num_block.firstChild);
-    let denomerator = denom_block.childElementCount > 1 ?
-        new Term([Block.fromHTML(denom_block)]) : Term.fromHTML(denom_block.firstChild);
-
-    let frac = new Frac(numerator, denomerator);
-
-    frac.HTMLElement = elem;
-    return frac;
-};
-
-
-Sqrt.fromHTML = function(elem) {
-    let root = Block.wrap(new Num(2));
-
-    if (elem.classList.contains(classNames.selectable)) {
-        root = Block.fromHTML(elem.firstChild);
-        elem = elem.lastChild;
-    }
-
-    let sqrt = new Sqrt(Block.fromHTML(elem.lastChild), root);
-    sqrt.HTMLElement = elem;
-    return sqrt;
-};
-
-
-Power.fromHTML = function(elem) {
-    let sup = childrenQuerySelector(elem.lastChild, "." + classNames.exponent);
-    let sub = childrenQuerySelector(elem.lastChild, "." + classNames.lowerIndex);
-
-    let subsub = new Power(getMathStructure(elem.firstChild), sup ? Block.fromHTML(sup) : null,
-        sub ? Block.fromHTML(sub) : null);
-    subsub.HTMLElement = elem;
-    return subsub;
-};
-
-
-Variable.fromHTML = function(elem) {
-    let variable = new Variable(elem.innerText);
-    variable.HTMLElement = elem;
-    return variable;
-};
-
-
-Func.fromHTML = function(elem) {
-    let func = new Func(elem.firstChild.innerText, getMathStructure(elem.lastChild));
-    func.HTMLElement = elem;
-    return func;
-};
-
-
-Num.fromHTML = function(elem) {
-    let number = new Num(elem.innerText);
-    number.HTMLElement = elem;
-    return number;
 };
 
 
 /**
- * @param {HTMLElement} elem
- * @return {MathStructure}
+ * @param {HTMLElement} root
+ * @param {Term} term
  */
-function getMathStructure(elem) {
-    if (elem.classList.contains(classNames.variable) || elem.tagName === "VAR") {
-        return Variable.fromHTML(elem);
-    } else if (elem.classList.contains(classNames.number)) {
-        return Num.fromHTML(elem);
-    } else if (elem.classList.contains(classNames.fraction)) {
-        return Frac.fromHTML(elem);
-    } else if (elem.classList.contains(classNames.function)) {
-        return Func.fromHTML(elem);
-    } else if (elem.firstChild.classList.contains(classNames.paren)) {
-        return Block.fromHTML(elem.firstChild.nextElementSibling);
-    } else if (elem.lastChild.classList.contains(classNames.sqrtContent) ||
-        elem.firstChild.classList.contains(classNames.sqrtBase)) {
-        return Sqrt.fromHTML(elem);
-    } else if (elem.lastChild.classList.contains(classNames.indices)) {
-        return Power.fromHTML(elem);
-    } else throw new Error("Unknown structure");
-}
+InteractiveField.prototype.prepareFraction = function(root, term) {
+    if (term.content.length==1) {
+        this.multiplierHandler(term.content[0], root);
+        return;
+    }
+
+    for (let multInd=0, elemInd=0; multInd<term.content.length; multInd++, elemInd++) {
+        while (root.children[elemInd].classList.contains("mo")) elemInd++;
+
+        this.multiplierHandler(term.content[multInd], root.children[elemInd]);
+    }
+};

@@ -1,19 +1,8 @@
-const specialSymbols = {
-    minus: {
-        sym: "−",
-        TeX: "-",
-    },
-    prime: {
-        sym: "′",
-        TeX: "'",
-    },
-};
-
 const availibleLetters = [
     "Delta", "alpha", "beta", "gamma", "delta", "zeta",
     "eta", "theta", "iota", "kappa", "lambda", "mu",
     "nu", "pi", "rho", "sigma", "tau", "upsilon",
-    "chichi", "varepsilon", "vartheta", "varphi",
+    "chi", "varepsilon", "vartheta", "varphi",
     "infin",
 ];
 
@@ -26,26 +15,11 @@ const interactiveFieldFunctions = {
     t: "separateTerm",
     m: "separateMultiplier",
     o: "openBrackets",
-    p: "substitute",
+    u: "substitute",
     a: "addEquations",
     s: "subtractEquations",
     d: "divideEquations",
 };
-
-
-/**
- * @param {string} latex
- * @return {HTMLDivElement}
- */
-function createFormula(latex) {
-    let elem = document.createElement("div");
-    elem.className = "formula";
-    elem.innerText = latex;
-
-    MQ.StaticMath(elem);
-    return elem;
-}
-
 
 /**
  * @param {number} a

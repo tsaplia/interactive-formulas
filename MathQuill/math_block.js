@@ -3,7 +3,7 @@ class Block extends MathStructure {
         super();
 
         /** @type {Array<Term>} */
-        this.content = content; // inner terms of block 
+        this.content = content; // inner terms of block
     }
 
     toTex() {
@@ -40,7 +40,7 @@ class Block extends MathStructure {
     }
 
     /**
-     * @returns {Block} copy of current block and all inner terms
+     * @return {Block} copy of current block and all inner terms
      */
     copy() {
         return new Block(this.content.map((term) => term.copy()));
@@ -48,7 +48,7 @@ class Block extends MathStructure {
 
     simplify() {
         this.removeExtraBlocks();
-        for(let term of this.content){
+        for (let term of this.content) {
             term.simplify();
         }
 
@@ -90,7 +90,7 @@ class Block extends MathStructure {
 
     /**
      * remove all plus-terms with only block multiplier
-     * @returns {boolean} was block content modified
+     * @return {boolean} was block content modified
      */
     removeExtraBlocks() {
         let modified = false;
@@ -122,7 +122,7 @@ class Block extends MathStructure {
 
     /**
      * Add terms/block to block
-     * @param  {...Block | Term} items 
+     * @param  {...Block | Term} items
      */
     add(...items) {
         for (let item of items) {
@@ -137,7 +137,7 @@ class Block extends MathStructure {
     }
 
     /**
-     * @param  {...Block | Term} items 
+     * @param  {...Block | Term} items
      */
     subtract(...items) {
         for (let item of items) {
@@ -164,7 +164,7 @@ class Block extends MathStructure {
     /**
      * @param {MathStructure} struct structure for wrapping
      * @param {string} [sign="+"] sign of wrapping term
-     * @returns {Block} struct wrapped in a block 
+     * @return {Block} struct wrapped in a block
      */
     static wrap(struct, sign = "+") {
         if (struct instanceof Term) {

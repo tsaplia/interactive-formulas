@@ -1,5 +1,5 @@
 /**
- * @typedef {{element: MathStructure, mult: ?MathStructure, term: ?Term, formula: ?Formula}} Active 
+ * @typedef {{main: MathStructure, HTML: HTMLElement , mult: ?MathStructure, term: ?Term, formula: ?Formula}} Active
  * Description of active element
  */
 
@@ -13,7 +13,7 @@ class InteractiveField {
 
         /** @type {Array<Active>} */
         this.active = []; // array of description of selected elements
-        
+
         this.main.addEventListener("click", (event) => {
             if (event.target == this.main) {
                 this.deleteActiveAll();
@@ -24,7 +24,7 @@ class InteractiveField {
     /**
      * @enum {Object<string, number>} possible types of active element returned by _getActiveType function
      */
-     static _activeTypes = {
+    static _activeTypes = {
         mult: 0,
         term: 1,
         formula: 2,
@@ -33,7 +33,7 @@ class InteractiveField {
     /**
      * Returns type of active element
      * @param {MathStructure} struct active element
-     * @returns {number} active element type id
+     * @return {number} active element type id
      */
     _getActiveType(struct) {
         if (struct instanceof Formula) {
@@ -42,8 +42,8 @@ class InteractiveField {
             return InteractiveField._activeTypes.term;
         } else if (struct instanceof MathStructure) {
             return InteractiveField._activeTypes.mult;
-        } else{
-            throw new Error("Struct must be MathStructure instance")
+        } else {
+            throw new Error("Struct must be MathStructure instance");
         }
     }
 
@@ -54,7 +54,7 @@ class InteractiveField {
     setActive(active) {
         this.deleteActiveAll();
 
-        this._setBorder(active.element);
+        this._setStyle(active);
         this.active.push(active);
     }
 
@@ -67,36 +67,37 @@ class InteractiveField {
             this.deleteActive(active[key]);
         }
 
-        this._setBorder(active.element);
+        this._setStyle(active);
         this.active.push(active);
     }
 
     /**
-     * Set border to selected element
-     * @param {MathStructure} struct selected element
+     * set css class to html element depending on the activeType
+     * @param {Active} active selected element
+     * @param {string} [method="add"] "add" or "remove" css class
      */
-    _setBorder(struct) {
-        switch (this._getActiveType(struct)) {
+    _setStyle(active, method="add") {
+        switch (this._getActiveType(active.main)) {
         case InteractiveField._activeTypes.formula:
-            struct.HTMLElement.style.borderStyle = "dotted";
+            active.HTML.classList[method]("active-formula");
             break;
         case InteractiveField._activeTypes.term:
-            struct.HTMLElement.style.borderStyle = "dashed";
+            active.HTML.classList[method]("active-term");
             break;
         case InteractiveField._activeTypes.mult:
-            struct.HTMLElement.style.borderStyle = "solid";
+            active.HTML.classList[method]("active-mult");
             break;
         }
     }
 
     /**
      * Remove element from selected
-     * @param {MathStructure} elem 
+     * @param {MathStructure} elem
      */
     deleteActive(elem) {
         for (let i = 0; i < this.active.length; i++) {
-            if (this.active[i].element == elem) {
-                this.active[i].element.HTMLElement.style.borderStyle = "none";
+            if (this.active[i].main == elem) {
+                this._setStyle(this.active[i], "remove");
                 this.active.splice(i, 1);
                 break;
             }
@@ -108,7 +109,7 @@ class InteractiveField {
      */
     deleteActiveAll() {
         for (let obj of this.active) {
-            obj.element.HTMLElement.style.borderStyle = "none";
+            this._setStyle(obj, "remove");
         }
 
         this.active = [];
@@ -117,10 +118,10 @@ class InteractiveField {
     /**
      * Is element selected
      * @param {MathStructure} elem // checked element
-     * @param {string} [param = "element" ] // one of Active properties in witch 
-     * @returns {boolean} 
+     * @param {string} [param = "main" ] // one of Active properties in witch
+     * @return {boolean}
      */
-    _isActive(elem, param = "element") {
+    _isActive(elem, param = "main") {
         for (let obj of this.active) {
             if (obj[param] == elem) {
                 return true;
@@ -131,38 +132,31 @@ class InteractiveField {
 
     /**
      * Add formula element to interactiveField
-     * @param {HTMLElement} content element with visualised formula
+     * @param {HTMLElement} TeX element with visualised formula
      */
-    insertContent(content) {
-        this.main.append(content);
-
-        let formula = Formula.fromHTML(content);
+    insertFormula(TeX) {
+        let formula = formulaFromTeX(TeX);
         this.formulas.push(formula);
 
-        this._setHandlers(formula.leftPart());
-        this._setHandlers(formula.rightPart());
-        this.formulaHandler(formula);
-    }
+        let elem = document.createElement("div");
+        elem.innerHTML = `$$${TeX}$$`;
+        elem.className = "content-formula";
 
-    /**
-     * Set click handlers for all up-lewel terms and multipliers
-     * @param {Block} block
-     */
-    _setHandlers(block) {
-        for (let term of block.content) {
-            this.termHandler(term);
-            term.allMultipliers().forEach((elem) => {
-                this.multiplierHandler(elem);
-            });
-        }
+        this.main.append(elem);
+        MathJax.Hub.Queue(
+            ["Typeset", MathJax.Hub, elem],
+            ["prepareHTML", this, elem, formula],
+            // ["append",this.main, elem],
+        );
     }
 
     /**
      * Set click handler for multiplier
-     * @param {MathStructure} mult 
+     * @param {MathStructure} mult
+     * @param {HTMLElement} elem
      */
-    multiplierHandler(mult) {
-        mult.HTMLElement.addEventListener("click", (event) => {
+    multiplierHandler(mult, elem) {
+        elem.addEventListener("click", (event) => {
             if (this._isActive(mult)) {
                 this.deleteActive(mult);
                 event.stopPropagation();
@@ -170,7 +164,8 @@ class InteractiveField {
             };
 
             event.clickDescription = {
-                element: mult,
+                main: mult,
+                HTML: elem,
                 mult: mult,
             };
         });
@@ -178,23 +173,26 @@ class InteractiveField {
 
     /**
      * Set click handler for term
-     * @param {Term} term 
+     * @param {Term} term
+     * @param {HTMLElement} elem
      */
-    termHandler(term) {
-        term.HTMLElement.addEventListener("click", (event) => {
+    termHandler(term, elem) {
+        elem.addEventListener("click", (event) => {
             if (event.clickDescription) {
                 if (!this._isActive(term, "term")) {
-                    event.clickDescription.element = term;
+                    event.clickDescription.main = term;
+                    event.clickDescription.HTML = elem;
                     delete event.clickDescription.mult;
                 }
             } else {
                 event.clickDescription = {
-                    element: term,
+                    main: term,
+                    HTML: elem,
                 };
             }
             event.clickDescription.term = term;
 
-            if (event.clickDescription.element == term && this._isActive(term)) {
+            if (event.clickDescription.main == term && this._isActive(term)) {
                 this.deleteActive(term);
                 event.stopPropagation();
             }
@@ -203,18 +201,20 @@ class InteractiveField {
 
     /**
      * Set click handler for formula
-     * @param {Formula} formula 
+     * @param {Formula} formula
+     * @param {HTMLElement} elem
      */
-    formulaHandler(formula) {
-        formula.HTMLElement.addEventListener("click", (event) => {
+    formulaHandler(formula, elem) {
+        elem.addEventListener("click", (event) => {
             if (!event.clickDescription) {
                 event.clickDescription = {
-                    element: formula,
+                    main: formula,
+                    HTML: elem,
                 };
             }
             event.clickDescription.formula = formula;
 
-            if (event.clickDescription.element == formula && this._isActive(formula)) {
+            if (event.clickDescription.main == formula && this._isActive(formula)) {
                 this.deleteActive(formula);
                 return;
             }
@@ -229,71 +229,71 @@ class InteractiveField {
 
     separateTerm() {
         if (this.active.length != 1 ||
-            this._getActiveType(this.active[0].element) != InteractiveField._activeTypes.term) return;
+            this._getActiveType(this.active[0].main) != InteractiveField._activeTypes.term) return;
 
-        let newFormula = this.active[0].formula.separateTerm(this.active[0].element);
-        this.insertContent(createFormula(newFormula.toTex()));
+        let newFormula = this.active[0].formula.separateTerm(this.active[0].main);
+        this.insertFormula(newFormula.toTex());
     }
 
     separateMultiplier() {
         if (this.active.length != 1 ||
-            this._getActiveType(this.active[0].element) != InteractiveField._activeTypes.mult) return;
+            this._getActiveType(this.active[0].main) != InteractiveField._activeTypes.mult) return;
 
-        let newFormula = this.active[0].formula.separateMultiplier(this.active[0].element, this.active[0].term);
-        this.insertContent(createFormula(newFormula.toTex()));
+        let newFormula = this.active[0].formula.separateMultiplier(this.active[0].main, this.active[0].term);
+        this.insertFormula(newFormula.toTex());
     }
 
     openBrackets() {
-        if (this.active.length != 1 || (!this.active[0].element instanceof Block)) return;
+        if (this.active.length != 1 || (!this.active[0].main instanceof Block)) return;
 
-        let newFormula = this.active[0].formula.openBrackets(this.active[0].element, this.active[0].term);
-        this.insertContent(createFormula(newFormula.toTex()));
+        let newFormula = this.active[0].formula.openBrackets(this.active[0].main, this.active[0].term);
+        this.insertFormula(newFormula.toTex());
     }
 
     substitute() {
         if (this.active.length != 2 ||
-            !this.active[0].element.isEqual(this.active[1].element) ||
+            !this.active[0].main.isEqual(this.active[1].main) ||
             !this.active[0].formula.isSeparatedTerm(this.active[0].term)) return;
 
         let newFormula;
-        if (this._getActiveType(this.active[0].element) == InteractiveField._activeTypes.term) {
-            newFormula = this.active[1].formula.substituteTerm(this.active[1].element, this.active[0].formula);
-        } else if (this._getActiveType(this.active[0].element) == InteractiveField._activeTypes.mult &&
-            this.active[0].formula.isSeparatedMultiplier(this.active[0].element)) {
-            newFormula = this.active[1].formula.substituteMultiplier(this.active[1].element,
+        if (this._getActiveType(this.active[0].main) == InteractiveField._activeTypes.term) {
+            newFormula = this.active[1].formula.substituteTerm(this.active[1].main, this.active[0].formula);
+        } else if (this._getActiveType(this.active[0].main) == InteractiveField._activeTypes.mult &&
+            this.active[0].formula.isSeparatedMultiplier(this.active[0].main)) {
+            newFormula = this.active[1].formula.substituteMultiplier(this.active[1].main,
                 this.active[1].term, this.active[0].formula);
         } else return;
 
-        this.insertContent(createFormula(newFormula.toTex()));
+        this.insertFormula(newFormula.toTex());
     }
 
     addEquations() {
         for (let item of this.active) {
-            if (this._getActiveType(item.element) != InteractiveField._activeTypes.formula) return;
+            if (this._getActiveType(item.main) != InteractiveField._activeTypes.formula) return;
         }
 
-        let newFormula = this.active[0].element.add(...this.active.slice(1).map((value) => value.element));
-        this.insertContent(createFormula(newFormula.toTex()));
+        let newFormula = this.active[0].main.add(...this.active.slice(1).map((value) => value.main));
+        this.insertFormula(newFormula.toTex());
     }
 
     subtractEquations() {
         if (this.active.length != 2) return;
         for (let item of this.active) {
-            if (this._getActiveType(item.element) != InteractiveField._activeTypes.formula) return;
+            if (this._getActiveType(item.main) != InteractiveField._activeTypes.formula) return;
         }
 
-        let newFormula = this.active[0].element.subtract(this.active[1].element);
-        this.insertContent(createFormula(newFormula.toTex()));
+        let newFormula = this.active[0].main.subtract(this.active[1].main);
+        this.insertFormula(newFormula.toTex());
     }
 
     divideEquations() {
         if (this.active.length != 2) return;
         for (let item of this.active) {
-            if (this._getActiveType(item.element) != InteractiveField._activeTypes.formula) return;
+            if (this._getActiveType(item.main) != InteractiveField._activeTypes.formula) return;
         }
 
-        let newFormula = this.active[0].element.divide(this.active[1].element);
-        this.insertContent(createFormula(newFormula.toTex()));
+        let newFormula = this.active[0].main.divide(this.active[1].main);
+        this.insertFormula(newFormula.toTex());
     }
 }
 

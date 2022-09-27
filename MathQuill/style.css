@@ -1,16 +1,33 @@
-.formula{
-    display: block;
-    font-size: 150%;
+.content-formula{
+    user-select: none; 
+   -webkit-user-select: none; 
+   -khtml-user-select: none; 
+   -moz-user-select: none; 
+   -ms-user-select: none; 
 }
+
+.active-formula{
+    background-color: brown;
+}
+
+.active-term{
+    background-color: blueviolet;
+}
+
+.active-mult{
+    background-color: blue;
+}
+
 .mq-math-mode .mq-supsub {
     font-size: 75%;
     vertical-align: -0.5em;
 }
 
-.mq-root-block, .mq-math-mode .mq-root-block{
-    display: inline;
+.in-formula{
+    padding-right: 20px !important;
 }
 
 #interactive{
     padding: 0 20px 20px 0;
+    font-size: 30px;
 }

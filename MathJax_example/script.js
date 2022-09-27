@@ -8,8 +8,8 @@ renderButton.addEventListener("click", () => {
     MathJax.Hub.Queue(["Typeset",MathJax.Hub,outputField], [addListeners]);
 });
 
-function addListeners(){
-
+function addListeners(mes){
+    console.log(mes);
 }
 
 function getStructure(elem){

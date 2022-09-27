@@ -154,14 +154,14 @@ class Variable extends MathStructure {
 
     toTex() {
         let TeX = this.name;
-        for(let i=0; i<this.primeCount; i++) TeX+="'";
-        if(this.index) {
-            TeX += "_" + (this.index.length == 1 ? this.index: `{${this.index}}`)
+        for (let i=0; i<this.primeCount; i++) TeX+="'";
+        if (this.index) {
+            TeX += "_" + (this.index.length == 1 ? this.index: `{${this.index}}`);
         }
-        if(this.vector){
-            TeX = `\\vec{${TeX}}`
+        if (this.vector) {
+            TeX = `\\vec{${TeX}}`;
         }
-        return TeX
+        return TeX;
     }
 
     isEqual(other) {

@@ -18,9 +18,7 @@ const inputField = MQ.MathField(inputFieldSpan, {
 });
 
 inputFieldSpan.addEventListener("focusout", ()=>{
-    let formula = createFormula(inputField.latex());
-    interactiveField.insertContent(formula);
-
+    interactiveField.insertFormula(inputField.latex());
     inputField.latex("");
 });
 
