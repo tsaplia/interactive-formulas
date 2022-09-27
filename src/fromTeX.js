@@ -203,13 +203,14 @@ function powerFromTeX(itStr, base) {
  */
 function sqrtFromTeX(itStr) {
     let root = Block.wrap(new Num(2));
-    itStr.add(6);
+    itStr.add(5);
     if (itStr.startsWith("[")) {
         itStr.add();
         root = blockFromTeX(itStr);
         if (!itStr.startsWith("]{")) error();
-        itStr.add(2);
+        itStr.add();
     }
+    itStr.add();
     let base = blockFromTeX(itStr);
     if (base.content.length == 1 && base.content[0].content.length == 1 && base.content[0].sign == "+") {
         base = base.content[0].content[0];

@@ -142,11 +142,10 @@ class InteractiveField {
         elem.innerHTML = `$$${TeX}$$`;
         elem.className = "content-formula";
 
-        this.main.append(elem);
         MathJax.Hub.Queue(
             ["Typeset", MathJax.Hub, elem],
             ["prepareHTML", this, elem, formula],
-            // ["append",this.main, elem],
+            ["append",this.main, elem],
         );
     }
 

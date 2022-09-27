@@ -16,10 +16,6 @@ class Block extends MathStructure {
             str += this.content[i].toTex();
         }
 
-        for (let symbol of Object.values(specialSymbols)) {
-            str.replace(symbol.sym, symbol.TeX);
-        }
-
         console.assert(this.content.length, "Empty block content");
 
         return str;

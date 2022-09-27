@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Run  Mathquill</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.css"/> 
+    <link rel="stylesheet" href="style.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script>
+        let MQ = MathQuill.getInterface(2);
+    </script>
+    <script src="src/basic.js"></script>
+    <script src="src/math_struture.js"></script>
+    <script src="src/math_formula.js"></script>
+    <script src="src/math_block.js"></script>
+    <script src="src/math_term.js"></script>
+    <script src="src/fromTeX.js"></script>
+    <script src="src/interactive_field.js"></script>
+    <script src="src/fromHTML.js"></script>
+</head>
+<body>
+  <div class="content">
+    <div id="input" class="container">
+        <span id="input-field"></span> 
+        <button id="render-button">Render</button>
+    </div>
+    <div class="conteiner">
+      <p>LaTeX of what you typed: <span id="latex"></span></p>
+    </div>
+    <div id="output" class="container">
+      <p>Interactive formulas:</p>
+      <div id="interactive"></div>
+    </div>
+  </div>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        loader: {load: ["input/tex", "output/chtml"]},
+        menuOptions: {
+            settings: {
+                zoom: 'NoZoom',  
+                zscale: '100%',    
+            },
+        },
+        tex2jax: {
+          preview: "none"
+        },
+        showMathMenu: false,
+        messageStyle: "none",
+    });
+  </script>
+  <script src="script.js"></script>
+
+</body>

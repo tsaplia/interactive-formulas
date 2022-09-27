@@ -31,3 +31,35 @@
     padding: 0 20px 20px 0;
     font-size: 30px;
 }
+
+#input-field{
+    width: 80%;
+    height: 100%;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+
+.container{
+    margin-bottom: 20px;
+}
+
+.content{
+    width: 810px;
+    margin: 0 auto;
+}
+
+
+#input{
+    height: 40px;
+}
+
+#render-button{
+    height: 100%;
+    width: 15%;
+}
+
+#output{
+    height:80px;
+}
+

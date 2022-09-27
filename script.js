@@ -1,6 +1,7 @@
 const inputFieldSpan = document.querySelector("#input-field");
 const latexSpan = document.querySelector("#latex");
 const interactiveConternt = document.querySelector("#interactive");
+const renderButton = document.querySelector("#render-button");
 
 const interactiveField = new InteractiveField(interactiveConternt);
 
@@ -17,8 +18,9 @@ const inputField = MQ.MathField(inputFieldSpan, {
     },
 });
 
-inputFieldSpan.addEventListener("focusout", ()=>{
+renderButton.addEventListener("click", ()=>{
     interactiveField.insertFormula(inputField.latex());
+    inputField.blur();
     inputField.latex("");
 });
 
