@@ -122,7 +122,7 @@ InteractiveField.prototype.prepareMults = function(root, term) {
             let num = root.children[elemInd].firstChild.firstChild.firstChild;
             this.prepareFraction(num, term.content[multInd].numerator);
             let denom = root.children[elemInd].firstChild.firstChild.nextSibling.firstChild;
-            this.prepareFraction(denom, term.content[multInd].denominator);
+            this.prepareFraction(denom, term.content[multInd].denomerator);
         } else {
             this.multiplierHandler(term.content[multInd], root.children[elemInd]);
         }

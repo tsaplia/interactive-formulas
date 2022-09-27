@@ -294,6 +294,13 @@ class InteractiveField {
         let newFormula = this.active[0].main.divide(this.active[1].main);
         this.insertFormula(newFormula.toTex());
     }
+
+    copy(){
+        if (this.active.length != 1) return;
+
+        navigator.clipboard.writeText(this.active[0].main.toTex());
+    }
 }
+
 
 

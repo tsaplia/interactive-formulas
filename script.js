@@ -27,5 +27,7 @@ renderButton.addEventListener("click", ()=>{
 document.addEventListener("keydown", (event) => {
     if (event.ctrlKey && event.altKey && Object.keys(interactiveFieldFunctions).includes(event.key)) {
         interactiveField[interactiveFieldFunctions[event.key]]();
+    }else if(event.ctrlKey && event.key=="c"){
+        interactiveField.copy();
     }
 });
