@@ -243,7 +243,8 @@ class InteractiveField {
     }
 
     openBrackets() {
-        if (this.active.length != 1 || (!this.active[0].main instanceof Block)) return;
+        if (this.active.length != 1 || (!this.active[0].main instanceof Block) || 
+                !(this.active[0].term.content.includes(this.active[0].main))) return;
 
         let newFormula = this.active[0].formula.openBrackets(this.active[0].main, this.active[0].term);
         this.insertFormula(newFormula.toTex());
@@ -297,8 +298,7 @@ class InteractiveField {
 
     copy(){
         if (this.active.length != 1) return;
-
-        navigator.clipboard.writeText(this.active[0].main.toTex());
+        return this.active[0].main.toTex();
     }
 }
 

@@ -21,13 +21,18 @@ const inputField = MQ.MathField(inputFieldSpan, {
 renderButton.addEventListener("click", ()=>{
     interactiveField.insertFormula(inputField.latex());
     inputField.blur();
-    inputField.latex("");
 });
 
 document.addEventListener("keydown", (event) => {
     if (event.ctrlKey && event.altKey && Object.keys(interactiveFieldFunctions).includes(event.key)) {
         interactiveField[interactiveFieldFunctions[event.key]]();
-    }else if(event.ctrlKey && event.key=="c"){
-        interactiveField.copy();
     }
+});
+
+document.addEventListener("copy", (event)=>{
+    let TeX = interactiveField.copy();
+    if(TeX) {
+        event.clipboardData.setData('text/plain', TeX);
+    }
+    event.preventDefault();
 });

@@ -1,4 +1,4 @@
-class Term extends MathStructure {
+class Term {
     constructor(content, sign = "+") {
         super();
         /** @type {string} */

@@ -188,10 +188,11 @@ class Formula extends MathStructure {
         let part = this._getActivePart(term).copy();
 
         let newTerms = [];
-        block.content.forEach((item) => {
-            let newTerm = term.copy();
-            newTerm.content.splice(newTerm.content.indexOf(block), 1);
 
+        let termCopy = term.copy();
+        termCopy.content.splice(termCopy.content.indexOf(block), 1);
+        block.content.forEach((item) => {
+            let newTerm = termCopy.copy();
             newTerm.mul(item);
             newTerms.push(newTerm);
         });
