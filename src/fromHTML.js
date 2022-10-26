@@ -58,7 +58,7 @@ function wrap(root, className = "") {
  * @param {HTMLElement} root
  * @param {Formula} formula
  */
-InteractiveField.prototype.prepareHTML = function(root, formula) {
+FormulaManager.prototype.prepareHTML = function(root, formula) {
     let content = root.querySelector(".mrow");
     content.classList.add(classNames.formula);
 
@@ -75,7 +75,7 @@ InteractiveField.prototype.prepareHTML = function(root, formula) {
  * @param {HTMLElement} root
  * @param {Formula} formula
  */
-InteractiveField.prototype.prepareEqualityParts = function(root, formula) {
+FormulaManager.prototype.prepareEqualityParts = function(root, formula) {
     let group = wrap(root.firstChild, classNames.equalityPart);
     for (let i=0; i<formula.equalityParts.length; i++) {
         let next = group.nextElementSibling;
@@ -94,7 +94,7 @@ InteractiveField.prototype.prepareEqualityParts = function(root, formula) {
  * @param {HTMLElement} root
  * @param {Block} block
  */
-InteractiveField.prototype.prepareTerms = function(root, block) {
+FormulaManager.prototype.prepareTerms = function(root, block) {
     let group = wrap(root.firstChild, classNames.term);
     for (let i=0; i<block.content.length; i++) {
         let next = group.nextElementSibling;
@@ -114,7 +114,7 @@ InteractiveField.prototype.prepareTerms = function(root, block) {
  * @param {HTMLElement} root
  * @param {Term} term
  */
-InteractiveField.prototype.prepareMults = function(root, term) {
+FormulaManager.prototype.prepareMults = function(root, term) {
     for (let multInd=0, elemInd=0; multInd<term.content.length; multInd++, elemInd++) {
         while (root.children[elemInd].classList.contains("mo")) elemInd++;
 
@@ -134,7 +134,7 @@ InteractiveField.prototype.prepareMults = function(root, term) {
  * @param {HTMLElement} root
  * @param {Term} term
  */
-InteractiveField.prototype.prepareFraction = function(root, term) {
+FormulaManager.prototype.prepareFraction = function(root, term) {
     if (term.content.length==1) {
         this.multiplierHandler(term.content[0], root);
         return;

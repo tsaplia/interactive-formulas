@@ -3,7 +3,7 @@ const latexSpan = document.querySelector("#latex");
 const interactiveConternt = document.querySelector("#interactive");
 const renderButton = document.querySelector("#render-button");
 
-const interactiveField = new InteractiveField(interactiveConternt);
+const interactiveField = new Interactive(interactiveConternt);
 
 const inputField = MQ.MathField(inputFieldSpan, {
     supSubsRequireOperand: true,
@@ -19,20 +19,13 @@ const inputField = MQ.MathField(inputFieldSpan, {
 });
 
 renderButton.addEventListener("click", ()=>{
-    interactiveField.insertFormula(inputField.latex());
+    interactiveField.formulaManager.insertFormula(inputField.latex());
     inputField.blur();
 });
 
 document.addEventListener("keydown", (event) => {
     if (event.ctrlKey && event.altKey && Object.keys(interactiveFieldFunctions).includes(event.key)) {
-        interactiveField[interactiveFieldFunctions[event.key]]();
+        interactiveField.formulaManager[interactiveFieldFunctions[event.key]]();
     }
 });
 
-document.addEventListener("copy", (event)=>{
-    let TeX = interactiveField.copy();
-    if(TeX) {
-        event.clipboardData.setData('text/plain', TeX);
-    }
-    event.preventDefault();
-});

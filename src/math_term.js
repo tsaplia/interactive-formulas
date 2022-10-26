@@ -1,6 +1,5 @@
 class Term {
     constructor(content, sign = "+") {
-        super();
         /** @type {string} */
         this.sign = sign; // plus(+) or minus(-)
 
