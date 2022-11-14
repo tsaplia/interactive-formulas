@@ -43,7 +43,7 @@ class FormulaManager {
      * @param {Active} active description of selected element
      */
     setActive(active) {
-        if(!this.main.changeable) return;
+        if (!this.main.changeable) return;
 
         this.deleteActiveAll();
 
@@ -56,7 +56,7 @@ class FormulaManager {
      * @param {Active} active description of selected element
      */
     addActive(active) {
-        if(!this.main.changeable) return;
+        if (!this.main.changeable) return;
 
         for (let key in active) {
             this.deleteActive(active[key]);
@@ -90,7 +90,7 @@ class FormulaManager {
      * @param {MathStructure} elem
      */
     deleteActive(elem) {
-        if(!this.main.changeable) return;
+        if (!this.main.changeable) return;
 
         for (let i = 0; i < this.active.length; i++) {
             if (this.active[i].main == elem) {
@@ -105,7 +105,7 @@ class FormulaManager {
      * Remove all selected elements
      */
     deleteActiveAll() {
-        if(!this.main.changeable) return;
+        if (!this.main.changeable) return;
 
         for (let obj of this.active) {
             this._setStyle(obj, "remove");
@@ -224,8 +224,8 @@ class FormulaManager {
         });
     }
 
-    get canSeparateTerm(){
-        return this.active.length == 1 && 
+    get canSeparateTerm() {
+        return this.active.length == 1 &&
             this._getActiveType(this.active[0].main) == FormulaManager._activeTypes.term
     }
 
@@ -236,9 +236,9 @@ class FormulaManager {
         this.insertFormula(newFormula.toTex());
     }
 
-    get canSeparateMultiplier(){
+    get canSeparateMultiplier() {
         return this.active.length == 1 &&
-        this._getActiveType(this.active[0].main) == FormulaManager._activeTypes.mult
+            this._getActiveType(this.active[0].main) == FormulaManager._activeTypes.mult
     }
 
     separateMultiplier() {
@@ -248,7 +248,7 @@ class FormulaManager {
         this.insertFormula(newFormula.toTex());
     }
 
-    get canOpenBrackets(){
+    get canOpenBrackets() {
         return this.active.length == 1 && this.active[0].main instanceof Block &&
             this.active[0].term.content.includes(this.active[0].main)
     }
@@ -277,7 +277,7 @@ class FormulaManager {
         this.insertFormula(newFormula.toTex());
     }
 
-    get canAddEquations(){
+    get canAddEquations() {
         for (let item of this.active) {
             if (this._getActiveType(item.main) != FormulaManager._activeTypes.formula) return false;
         }
@@ -285,29 +285,29 @@ class FormulaManager {
     }
 
     addEquations() {
-        if(!this.canAddEquations) return;
+        if (!this.canAddEquations) return;
 
         let newFormula = this.active[0].main.add(...this.active.slice(1).map((value) => value.main));
         this.insertFormula(newFormula.toTex());
     }
 
-    get canSubtractEquations(){
+    get canSubtractEquations() {
         return this.active.length == 2 && this.canAddEquations;
     }
 
     subtractEquations() {
-        if(!this.canSubtractEquations) return;
+        if (!this.canSubtractEquations) return;
 
         let newFormula = this.active[0].main.subtract(this.active[1].main);
         this.insertFormula(newFormula.toTex());
     }
 
-    get canDivideEquations(){
+    get canDivideEquations() {
         return this.canSubtractEquations;
     }
 
     divideEquations() {
-        if(!this.canDivideEquations) return;
+        if (!this.canDivideEquations) return;
 
         let newFormula = this.active[0].main.divide(this.active[1].main);
         this.insertFormula(newFormula.toTex());

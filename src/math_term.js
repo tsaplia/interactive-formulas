@@ -128,7 +128,7 @@ class Term {
             [currrentBase, currentPow] = Power.getPower(this.content[i]);
             [nextBase, nextPow] = Power.getPower(this.content[i + 1]);
 
-            if (!currrentBase.isEqual(nextBase)) continue;
+            if (!currrentBase.isEqual(nextBase) || currrentBase instanceof Num) continue;
 
             let sumPow = currentPow.copy();
             sumPow.add(nextPow);
@@ -336,7 +336,7 @@ class Term {
     }
 
     /**
-     * @param  {...MathStructure} items
+     * @param  {...MathStructure|Term} items
      */
     devide(...items) {
         let wasFrac = this._isFraction();
