@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Run  Mathquill</title>
-
+    <title>Interactive formulas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.css"/> 
     <link rel="stylesheet" href="style.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
@@ -14,46 +14,108 @@
     <script>
         let MQ = MathQuill.getInterface(2);
     </script>
-    <script src="src/basic.js"></script>
-    <script src="src/math_struture.js"></script>
-    <script src="src/math_formula.js"></script>
-    <script src="src/math_block.js"></script>
-    <script src="src/math_term.js"></script>
-    <script src="src/fromTeX.js"></script>
-    <script src="src/formula_manager.js"></script>
-    <script src="src/fromHTML.js"></script>
-    <script src="src/interactive.js"></script>
+    <script src="https://kit.fontawesome.com/80f9fef578.js" crossorigin="anonymous"></script>
+
+    <script src="scr/basic.js"></script>
+    <script src="src/math/structure.js"></script>
+    <script src="src/math/block.js"></script>
+    <script src="src/math/term.js"></script>
+    <script src="src/math/formula.js"></script>
+    <script src="src/formulas/fromTeX.js"></script>
+
+
 </head>
 <body>
-  <div class="content">
-    <div id="input" class="container">
-        <span id="input-field"></span> 
-        <button id="render-button">Render</button>
+    <div class="container-xl pt-2" style="position:relative;">
+        <div class="btn-group tool-bow mt-2" role="group" >
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-primary dropdown-toggle insert-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                    Insert
+                </button>
+                <ul class="dropdown-menu insert-dm">
+                    <li class="dropdown-item insert-formula-btn">Formula</li>
+                </ul>
+            </div>
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-primary dropdown-toggle formulas-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                    Formulas
+                </button>
+                <ul class="dropdown-menu">
+                    <li class="dropdown-item" id="separate-btn">Separate</li>
+                    <li class="dropdown-item" id="substitute-btn">Substitute</li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li class="dropdown-item" id="common-denominator-btn">To common denominator</li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li class="dropdown-item" id="open-bracket-btn">Open bracket</li>
+                    <li class="dropdown-item" id="out-bracket-btn">Move out of bracket</li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li class="dropdown-item" id="multiply-btn">Multiply</li>
+                    <li class="dropdown-item" id="remove-eponent-btn">Remove eponent</li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li class="dropdown-item" id="add-btn">Add</li>
+                    <li class="dropdown-item" id="substract-btn">Substract</li>
+                    <li class="dropdown-item" id="devide-btn">Devide</li>
+                </ul>
+            </div>
+        </div>
+        <div class="row justify-content-center math-input mt-4" >
+            <div class="col-md-8 col-sm-10 py-2">
+                <div class="input-group ">
+                    <span class="form-control mq-input-field">
+                    </span>
+                    <button class="btn btn-primary formula-ready" type="button">Render</button>
+                </div>
+            </div>
+        </div>
+        <button class="col-auto btn btn-outline-light">
+            <i class="fa-solid fa-keyboard " style="color: grey;"></i> 
+        </button>
+        <div class="interactive mt-2">
+        </div>
+        <ul class="dropdown-menu context-menu">
+            <li class="dropdown-item">Copy</li>
+            <li class="dropdown-item">Paste</li>
+            <li class="dropdown-item">Edit</li>
+        </ul>
+        
     </div>
-    <div class="conteiner">
-      <p>LaTeX of what you typed: <span id="latex"></span></p>
-    </div>
-    <div id="output" class="container">
-      <p>Interactive formulas:</p>
-      <div id="interactive"></div>
-    </div>
-  </div>
-  <script type="text/x-mathjax-config">
-    MathJax.Hub.Config({
-        loader: {load: ["input/tex", "output/chtml"]},
-        menuOptions: {
-            settings: {
-                zoom: 'NoZoom',  
-                zscale: '100%',    
-            },
-        },
-        tex2jax: {
-          preview: "none"
-        },
-        showMathMenu: false,
-        messageStyle: "none"
-    });
-  </script>
-  <script src="script.js"></script>
+    <script>
+        const menuArea = document.querySelector(".interactive");
+        const menu = document.querySelector(".context-menu");
+        const inputFieldSpan = document.querySelector(".mq-input-field");
+    
 
-</body>
+        menuArea.addEventListener( "contextmenu", event => {
+            event.preventDefault();
+            menu.style.top = `${event.clientY}px`;
+            menu.style.left = `${event.clientX}px`;
+            menu.classList.add("active-cm");
+        }, false);
+
+        document.addEventListener("click", event => {
+            menu.classList.remove("active-cm");
+        }, false);
+
+        menu.addEventListener("click", event => {
+            event.stopPropagation();
+        }, false);
+
+        const inputField = MQ.MathField(inputFieldSpan, {
+            supSubsRequireOperand: true,
+            maxDepth: 4,
+            handlers: {
+                enter: function() {
+                    inputField.blur();
+                },
+            },
+        });
+
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3" crossorigin="anonymous"></script>
+    
+    <script src="src/formulas/pre.js"></script>
+    <script src="src/formulas/active.js"></script>
+    <script src="src/formulas/set_handlers.js"></script>
+    <script src="src/formulas/actions.js"></script>
+    <script src="src/formulas/past.js"></script>
+</html>

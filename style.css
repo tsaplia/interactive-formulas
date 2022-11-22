@@ -27,39 +27,26 @@
     padding-right: 20px !important;
 }
 
-#interactive{
-    padding: 0 20px 20px 0;
-    font-size: 30px;
+#header{
+    color: aliceblue;
+}
+.context-menu{
+    position: fixed;
+}
+.context-menu.active-cm{
+    display: block;
+}
+.interactive{
+    min-height: 100px;
+    background-color: rgb(255, 255, 255);
+}
+.math-input{
+    display: none;
+    position:absolute;
+    width: 100%;
+    z-index: 500;
 }
 
-#input-field{
-    width: 80%;
-    height: 100%;
-    display: inline-block;
-    vertical-align: middle;
+body{
+    background-color: aliceblue;
 }
-
-
-.container{
-    margin-bottom: 20px;
-}
-
-.content{
-    width: 810px;
-    margin: 0 auto;
-}
-
-
-#input{
-    height: 40px;
-}
-
-#render-button{
-    height: 100%;
-    width: 15%;
-}
-
-#output{
-    height:80px;
-}
-

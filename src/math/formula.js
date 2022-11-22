@@ -90,6 +90,7 @@ class Formula extends MathStructure {
     /**
      * @param {Block} part  changed active part
      * @param {Term} term  term from active part
+     * @return {Formula}
      */
     _copyWithModifiedPart(part, term) {
         if (this._getActivePart(term) == this.rightPart()) {
@@ -100,30 +101,33 @@ class Formula extends MathStructure {
     }
 
     /**
-     * @param {Block} block 
+     * @param {Block} block
      * @return {MathStructure}
      */
     static _getMultiplier(block) {
-        if (block.content.length != 1 || block.content[0].sign == "-" || block.content[0].content.length != 1)
+        if (block.content.length != 1 || block.content[0].sign == "-" || block.content[0].content.length != 1) {
             return block;
+        }
         return block.content[0].content[0];
     }
 
     /**
-     * @param {Array<Term>} oldTerms 
-     * @param {Term} newTerm 
+     * @param {Array<Term>} oldTerms
+     * @param {Term} newTerm
+     * @return {Block}
      */
     _replaceTerms(oldTerms, newTerm) {
         let newPart = this._getActivePart(oldTerms[0]).copy();
         if (newTerm) newPart.content.push(newTerm);
         for (let term of oldTerms) {
-            newPart.content.splice(newPart.content.indexOf(newPart.content.find(el => el.isEqual(term))), 1);
+            newPart.content.splice(newPart.content.indexOf(newPart.content.find((el) => el.isEqual(term))), 1);
         }
         return newPart;
     }
 
     /**
      * @param {Term} term
+     * @return {Formula}
      */
     separateTerm(term) {
         let activePart = this._getActivePart(term);
@@ -154,6 +158,7 @@ class Formula extends MathStructure {
     /**
      * @param {MathStructure} mult
      * @param {Term} term
+     * @return {Formula}
      */
     separateMultiplier(mult, term) {
         let leftPart;
@@ -201,6 +206,7 @@ class Formula extends MathStructure {
     /**
      * @param {Block} block
      * @param {Term} term
+     * @return {Formula}
      */
     openBrackets(block, term) {
         let part = this._getActivePart(term).copy();
@@ -230,6 +236,7 @@ class Formula extends MathStructure {
     /**
      * @param {Term} term
      * @param {Formula} otherFormula
+     * @return {Formula}
      */
     substituteTerm(term, otherFormula) {
         let part = this._getActivePart(term).copy();
@@ -249,7 +256,8 @@ class Formula extends MathStructure {
     /**
      * @param {MathStructure} mult
      * @param {Term} term
-     * @param {Formula} otherFormula //formula withseparated multiplier
+     * @param {Formula} otherFormula formula withseparated multiplier
+     * @return {Formula}
      */
     substituteMultiplier(mult, term, otherFormula) {
         let part = this._getActivePart(term).copy();
@@ -299,6 +307,7 @@ class Formula extends MathStructure {
 
     /**
      * @param  {...Formula} formulas
+     * @return {Formula}
      */
     add(...formulas) {
         let leftPart = this.leftPart().copy();
@@ -317,6 +326,7 @@ class Formula extends MathStructure {
 
     /**
      * @param {Formula} formula
+     * @return {Formula}
      */
     subtract(formula) {
         let leftPart = this.leftPart().copy();
@@ -333,6 +343,7 @@ class Formula extends MathStructure {
 
     /**
      * @param {Formula} formula
+     * @return {Formula}
      */
     divide(formula) {
         let leftPart = this.leftPart().copy();
@@ -360,6 +371,7 @@ class Formula extends MathStructure {
 
     /**
      * @param {Power} mult
+     * @return {Formula}
      */
     removeExponent(mult) {
         if (!this.isSeparatedMultiplier(mult) || !(mult instanceof Power)) {
@@ -373,7 +385,8 @@ class Formula extends MathStructure {
     }
 
     /**
-     * @param {Block} multBlock 
+     * @param {Block} multBlock
+     * @return {Formula}
      */
     multiply(multBlock) {
         let newFormula = new Formula([this.leftPart().copy(), this.rightPart().copy()]);
@@ -389,15 +402,16 @@ class Formula extends MathStructure {
     }
 
     /**
-     * @param {Array<Term>} terms 
-     * @param {Block} multBlock 
+     * @param {Array<Term>} terms
+     * @param {Block} multBlock
+     * @return {Formula}
      */
     moveOutOfBracket(terms, multBlock) {
         let active = this._getActivePart(terms[0]);
         for (let term of terms) {
             if (!active.content.includes(term)) throw new Error("Unable to move out of bracket");
         }
-        
+
         let newTerm = multBlock.content.length != 1 ?new Term([multBlock]) : multBlock.content[0];
         let bracketContent = [];
         for (let term of terms) {
@@ -412,7 +426,8 @@ class Formula extends MathStructure {
 
 
     /**
-     * @param  {...Term} terms 
+     * @param  {...Term} terms
+     * @return {Formula}
      */
     toCommonDenominator(...terms) {
         let active = this._getActivePart(terms[0]);
@@ -433,7 +448,6 @@ class Formula extends MathStructure {
             for (let numTerm of newNum.content[0].content) {
                 numTerm.mul(coefs.denomerator);
                 numTerm.simplify();
-
             }
 
             if (term.sign == "-") term.content[0].numerator.changeSign();
@@ -447,8 +461,8 @@ class Formula extends MathStructure {
     }
 
     /**
-     * @param {Term} a 
-     * @param {Term} b 
+     * @param {Term} a
+     * @param {Term} b
      * @return {Frac}
      */
     _getComplementaryCoefs(a, b) {

@@ -6,10 +6,10 @@ let formulaReadyBtn = document.querySelector(".formula-ready");
 let insertDm = document.querySelector(".insert-dm");
 
 /** @type {string} */
-let state = "none"; 
+let state = "none";
 
 /** @param {HTMLElement} elem */
-function insertContent(elem){
+function insertContent(elem) {
     interactiveField.append(elem);
 }
 
@@ -23,7 +23,7 @@ async function formulaInput() {
 
     mathInputBox.style.display = "flex";
     let formula = null;
-    while(!formula){
+    while (!formula) {
         let userInput = await _getUserInput();
         try {
             formula = formulaFromTeX(userInput);
@@ -43,7 +43,7 @@ async function formulaInput() {
 
 function _getUserInput() {
     return new Promise((resolve, reject) => {
-        formulaReadyBtn.addEventListener("click",function(e) {
+        formulaReadyBtn.addEventListener("click", function(e) {
             resolve(inputField.latex());
         });
     });
@@ -54,7 +54,7 @@ function _getUserInput() {
  * Add formula element to interactiveField
  * @param {Formula} formula element with visualised formula
  */
- function insertFormula(formula) {
+function insertFormula(formula) {
     let elem = document.createElement("div");
     elem.innerHTML = `$$${formula.toTex()}$$`;
     elem.className = "content-formula";

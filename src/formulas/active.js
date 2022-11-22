@@ -24,7 +24,7 @@ function _getActiveType(struct) {
         return _activeTypes.term;
     } if (struct instanceof MathStructure) {
         return _activeTypes.mult;
-    } 
+    }
     throw new Error("Struct must be MathStructure instance");
 }
 
@@ -32,7 +32,7 @@ function _getActiveType(struct) {
  * Set selected element
  * @param {Active} active description of selected element
  */
- function setActive(active) {
+function setActive(active) {
     if (state != "none" && state!="formula") return;
 
     deleteActiveAll();
@@ -62,17 +62,17 @@ function addActive(active) {
  * @param {Active} active selected element
  * @param {string} [method="add"] "add" or "remove" css class
  */
- function _setStyle(active, method = "add") {
+function _setStyle(active, method = "add") {
     switch (_getActiveType(active.main)) {
-        case _activeTypes.formula:
-            active.HTML.classList[method]("active-formula");
-            break;
-        case _activeTypes.term:
-            active.HTML.classList[method]("active-term");
-            break;
-        case _activeTypes.mult:
-            active.HTML.classList[method]("active-mult");
-            break;
+    case _activeTypes.formula:
+        active.HTML.classList[method]("active-formula");
+        break;
+    case _activeTypes.term:
+        active.HTML.classList[method]("active-term");
+        break;
+    case _activeTypes.mult:
+        active.HTML.classList[method]("active-mult");
+        break;
     }
 }
 
@@ -95,7 +95,7 @@ function deleteActive(elem) {
 /**
  * Remove all selected elements
  */
- function deleteActiveAll() {
+function deleteActiveAll() {
     if (state!="formula") return;
 
     for (let obj of activeFormulas) {
@@ -125,7 +125,7 @@ function _isActive(elem, param = "main") {
  * @param {MathStructure} mult
  * @param {HTMLElement} elem
  */
- function multiplierHandler(mult, elem) {
+function multiplierHandler(mult, elem) {
     elem.addEventListener("click", (event) => {
         if (_isActive(mult)) {
             deleteActive(mult);
@@ -146,7 +146,7 @@ function _isActive(elem, param = "main") {
  * @param {Term} term
  * @param {HTMLElement} elem
  */
- function termHandler(term, elem) {
+function termHandler(term, elem) {
     elem.addEventListener("click", (event) => {
         if (event.clickDescription) {
             if (!_isActive(term, "term")) {
@@ -174,7 +174,7 @@ function _isActive(elem, param = "main") {
  * @param {Formula} formula
  * @param {HTMLElement} elem
  */
- function formulaHandler(formula, elem) {
+function formulaHandler(formula, elem) {
     elem.addEventListener("click", (event) => {
         if (!event.clickDescription) {
             event.clickDescription = {
@@ -196,6 +196,5 @@ function _isActive(elem, param = "main") {
         }
     });
 }
-
 
 
