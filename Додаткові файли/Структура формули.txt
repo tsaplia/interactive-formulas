@@ -1,0 +1,38 @@
+Formula
+    equality_parts: [Block]
+
+Block
+    content: [Term]
+
+Factor ::= Fraction | Func | Num | Sqrt | Power | Var | Block
+
+Term
+    sign: "+"|"-"
+    content: [Factor]
+
+
+Fraction
+    numerator: Term
+    denomerator: Term
+
+Func
+    VarName: string
+    Content: Block
+
+Num
+    value: number // always not negative
+
+Sqrt
+    root: Block
+    content: Factor
+
+Power
+    exponent: Block
+    base: Factor
+
+Variable
+    name: string
+    index: string
+    vector: bool
+    primeCount: number;
+
