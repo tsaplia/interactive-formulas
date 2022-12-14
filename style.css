@@ -25,6 +25,7 @@
 
 .in-formula{
     padding-right: 20px !important;
+    font-size: 2em !important;
 }
 
 #header{
@@ -49,4 +50,8 @@
 
 body{
     background-color: aliceblue;
+}
+
+.in-function, .in-term, .in-equality-part{
+    display: inline-block;
 }

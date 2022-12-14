@@ -33,13 +33,13 @@ function _getActiveType(struct) {
  * @param {Active} active description of selected element
  */
 function setActive(active) {
-    if (state != "none" && state!="formula") return;
+    if (state != states.none && state!=states.formula) return;
 
     deleteActiveAll();
     _setStyle(active);
     activeFormulas.push(active);
 
-    state="formula";
+    state = states.formula;
 }
 
 /**
@@ -47,7 +47,7 @@ function setActive(active) {
  * @param {Active} active description of selected element
  */
 function addActive(active) {
-    if (state != "none" && state!="formula") return;
+    if (state != states.none && state!=states.formula) return;
 
     for (let key in active) {
         deleteActive(active[key]);
@@ -60,18 +60,17 @@ function addActive(active) {
 /**
  * set css class to html element depending on the activeType
  * @param {Active} active selected element
- * @param {string} [method="add"] "add" or "remove" css class
  */
-function _setStyle(active, method = "add") {
+function _setStyle(active) {
     switch (_getActiveType(active.main)) {
     case _activeTypes.formula:
-        active.HTML.classList[method]("active-formula");
+        active.HTML.classList.toggle("active-formula");
         break;
     case _activeTypes.term:
-        active.HTML.classList[method]("active-term");
+        active.HTML.classList.toggle("active-term");
         break;
     case _activeTypes.mult:
-        active.HTML.classList[method]("active-mult");
+        active.HTML.classList.toggle("active-mult");
         break;
     }
 }
@@ -81,11 +80,11 @@ function _setStyle(active, method = "add") {
  * @param {MathStructure} elem
  */
 function deleteActive(elem) {
-    if (state!="formula") return;
+    if (state!=states.formula) return;
 
     for (let i = 0; i < activeFormulas.length; i++) {
         if (activeFormulas[i].main == elem) {
-            _setStyle(activeFormulas[i], "remove");
+            _setStyle(activeFormulas[i]);
             activeFormulas.splice(i, 1);
             break;
         }
@@ -96,10 +95,10 @@ function deleteActive(elem) {
  * Remove all selected elements
  */
 function deleteActiveAll() {
-    if (state!="formula") return;
+    if (state!=states.formula) return;
 
     for (let obj of activeFormulas) {
-        _setStyle(obj, "remove");
+        _setStyle(obj);
     }
 
     activeFormulas = [];
@@ -176,6 +175,8 @@ function termHandler(term, elem) {
  */
 function formulaHandler(formula, elem) {
     elem.addEventListener("click", (event) => {
+        event.stopPropagation();
+
         if (!event.clickDescription) {
             event.clickDescription = {
                 main: formula,

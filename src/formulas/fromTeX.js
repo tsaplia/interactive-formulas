@@ -157,23 +157,19 @@ function termFromTeX(itStr) {
  * @return {Frac}
  */
 function fracFromTeX(itStr) {
-    function _toTerm(block) {
-        if (block.content.length == 1) {
-            return block.content[0];
-        }
-        return new Term([block]);
-    }
-
     let num; let denom;
     itStr.add(6);
-    num = blockFromTeX(itStr);
+    num = new Term([blockFromTeX(itStr)]);
+    num.removeExtraBlocks();
     if (!itStr.startsWith("}{")) error();
+
     itStr.add(2);
-    denom = blockFromTeX(itStr);
+    denom = new Term([blockFromTeX(itStr)]);
+    denom.removeExtraBlocks();
     if (!itStr.startsWith("}")) error();
     itStr.add(1);
 
-    return new Frac(_toTerm(num), _toTerm(denom));
+    return new Frac(num, denom);
 }
 
 /**

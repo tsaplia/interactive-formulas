@@ -23,15 +23,32 @@ function _mark(root, className, selector, reducer) {
 }
 
 /**
+ * get all character from element and children
+ * @param {HTMLElement} elem
+ * @return {string}
+ */
+function _getInnerText(elem) {
+    if (elem.children.length == 0) {
+        let content = window.getComputedStyle(elem, "before").content;
+        return content == "none" ? "" : content.slice(1, -1);
+    }
+    let text = "";
+    for (let child of elem.children) {
+        text+= _getInnerText(child);
+    }
+    return text;
+}
+
+/**
  * @param {HTMLElement} root
  */
 function _groupFunctionParts(root) {
-    let selected = root.querySelectorAll(".mi");
+    let selected = root.querySelectorAll("mjx-mi");
     for (let elem of selected) {
-        if (!availibleMathFunc.includes(elem.innerHTML)) continue;
+        if (!availibleMathFunc.includes(_getInnerText(elem))) continue;
 
         let group = _wrap(elem, classNames.function);
-        if (!group.nextElementSibling.innerHTML) {
+        if (!_getInnerText(group.nextElementSibling)) {
             group.append(group.nextElementSibling);
         }
         group.appendChild(group.nextElementSibling);
@@ -59,11 +76,11 @@ function _wrap(root, className = "") {
  * @param {Formula} formula
  */
 function prepareHTML(root, formula) {
-    let content = root.querySelector(".mrow");
+    let content = root.querySelector("mjx-math");
     content.classList.add(classNames.formula);
 
     // mark "+" and "-"
-    _mark(content, classNames.breacker, ".mo", (e) => ["+", "−"].includes(e.innerHTML));
+    _mark(content, classNames.breacker, "mjx-mo", (e) => ["+", "−"].includes(_getInnerText(e)));
     _groupFunctionParts(content);
 
     _prepareEqualityParts(content, formula);
@@ -77,13 +94,13 @@ function prepareHTML(root, formula) {
  */
 function _prepareEqualityParts(root, formula) {
     let group = _wrap(root.firstChild, classNames.equalityPart);
-    for (let i=0; i<formula.equalityParts.length; i++) {
+    for (let i = 0; i < formula.equalityParts.length; i++) {
         let next = group.nextElementSibling;
-        while (next && next.innerHTML != "=") {
+        while (next && _getInnerText(next) != "=") {
             group.appendChild(next);
             next = group.nextElementSibling;
         }
-        _prepareTerms(group, formula.equalityParts[i]);
+        prepareTerms(group, formula.equalityParts[i]);
 
         if (next) group = _wrap(next.nextElementSibling, classNames.equalityPart);
     }
@@ -94,9 +111,9 @@ function _prepareEqualityParts(root, formula) {
  * @param {HTMLElement} root
  * @param {Block} block
  */
-function _prepareTerms(root, block) {
+function prepareTerms(root, block) {
     let group = _wrap(root.firstChild, classNames.term);
-    for (let i=0; i<block.content.length; i++) {
+    for (let i = 0; i < block.content.length; i++) {
         let next = group.nextElementSibling;
         while (next && !next.classList.contains(classNames.breacker)) {
             group.appendChild(next);
@@ -115,13 +132,15 @@ function _prepareTerms(root, block) {
  * @param {Term} term
  */
 function _prepareMults(root, term) {
-    for (let multInd=0, elemInd=0; multInd<term.content.length; multInd++, elemInd++) {
-        while (root.children[elemInd].classList.contains("mo")) elemInd++;
+    for (let multInd = 0, elemInd = 0; multInd < term.content.length; multInd++, elemInd++) {
+        while (root.children[elemInd].tagName=="MJX-MO") elemInd++;
 
         if (term.content[multInd] instanceof Frac) {
-            let num = root.children[elemInd].firstChild.firstChild.firstChild;
+            let num = root.children[elemInd].querySelector("mjx-num mjx-mrow") ||
+                 root.children[elemInd].querySelector("mjx-num");
             _prepareFraction(num, term.content[multInd].numerator);
-            let denom = root.children[elemInd].firstChild.firstChild.nextSibling.firstChild;
+            let denom = root.children[elemInd].querySelector("mjx-den mjx-mrow") ||
+                root.children[elemInd].querySelector("mjx-den");
             _prepareFraction(denom, term.content[multInd].denomerator);
         } else {
             multiplierHandler(term.content[multInd], root.children[elemInd]);
@@ -135,13 +154,14 @@ function _prepareMults(root, term) {
  * @param {Term} term
  */
 function _prepareFraction(root, term) {
-    if (term.content.length==1) {
+    if (term.content.length == 1) {
         multiplierHandler(term.content[0], root);
+        // sprtial hanler
         return;
     }
 
-    for (let multInd=0, elemInd=0; multInd<term.content.length; multInd++, elemInd++) {
-        while (root.children[elemInd].classList.contains("mo")) elemInd++;
+    for (let multInd = 0, elemInd = 0; multInd < term.content.length; multInd++, elemInd++) {
+        while (root.children[elemInd].classList.contains("mjx-mo")) elemInd++;
 
         multiplierHandler(term.content[multInd], root.children[elemInd]);
     }
