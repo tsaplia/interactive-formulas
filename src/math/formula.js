@@ -256,7 +256,7 @@ class Formula extends MathStructure {
     /**
      * @param {MathStructure} mult
      * @param {Term} term
-     * @param {Formula} otherFormula formula withseparated multiplier
+     * @param {Formula} otherFormula formula with separated multiplier
      * @return {Formula}
      */
     substituteMultiplier(mult, term, otherFormula) {

@@ -34,7 +34,7 @@ function _getInnerText(elem) {
     }
     let text = "";
     for (let child of elem.children) {
-        text+= _getInnerText(child);
+        text += _getInnerText(child);
     }
     return text;
 }
@@ -125,6 +125,22 @@ function prepareTerms(root, block) {
         if (next) group = _wrap(next, classNames.term);
     }
 };
+
+/**
+ * remove groupping from term element
+ * @param {HTMLElement} root
+ */
+function deleteTermGroups(root) {
+    let group = root.firstElementChild;
+    while (group) {
+        if (!group.classList.contains(classNames.term)) continue;
+
+        while (group.childNodes.length) {
+            root.insertBefore(group.firstChild, group);
+        }
+        group = group.nextElementSibling;
+    }
+}
 
 
 /**

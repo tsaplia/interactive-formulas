@@ -29,17 +29,24 @@ function _getActiveType(struct) {
 }
 
 /**
+ * Is it possible to work with formulas
+ * @return {boolean}
+ */
+function _stateCheck() {
+    return [states.formula, states.none, states.formulaFocus].includes(state);
+}
+
+
+/**
  * Set selected element
  * @param {Active} active description of selected element
  */
 function setActive(active) {
-    if (state != states.none && state!=states.formula) return;
-
     deleteActiveAll();
     _setStyle(active);
     activeFormulas.push(active);
 
-    state = states.formula;
+    if (state==states.none) state = states.formula;
 }
 
 /**
@@ -47,8 +54,6 @@ function setActive(active) {
  * @param {Active} active description of selected element
  */
 function addActive(active) {
-    if (state != states.none && state!=states.formula) return;
-
     for (let key in active) {
         deleteActive(active[key]);
     }
@@ -80,8 +85,6 @@ function _setStyle(active) {
  * @param {MathStructure} elem
  */
 function deleteActive(elem) {
-    if (state!=states.formula) return;
-
     for (let i = 0; i < activeFormulas.length; i++) {
         if (activeFormulas[i].main == elem) {
             _setStyle(activeFormulas[i]);
@@ -95,8 +98,6 @@ function deleteActive(elem) {
  * Remove all selected elements
  */
 function deleteActiveAll() {
-    if (state!=states.formula) return;
-
     for (let obj of activeFormulas) {
         _setStyle(obj);
     }
@@ -106,8 +107,8 @@ function deleteActiveAll() {
 
 /**
  * Is element selected
- * @param {MathStructure} elem // checked element
- * @param {string} [param = "main" ] // one of Active properties in witch
+ * @param {MathStructure} elem  checked element
+ * @param {string} [param = "main" ] one of Active properties in witch
  * @return {boolean}
  */
 function _isActive(elem, param = "main") {
@@ -120,12 +121,26 @@ function _isActive(elem, param = "main") {
 }
 
 /**
+ * Add a handler and save it depending on the state
+ * @param {HTMLElement} elem
+ * @param {EventHandlerFunc} func
+ */
+function _addHandler(elem, func) {
+    elem.addEventListener("click", func);
+    if (state == states.formulaFocus) {
+        focusFormulaConfig.handlers.push({target: elem, func: func});
+    }
+}
+
+/**
  * Set click handler for multiplier
  * @param {MathStructure} mult
  * @param {HTMLElement} elem
  */
 function multiplierHandler(mult, elem) {
-    elem.addEventListener("click", (event) => {
+    _addHandler(elem, (event) => {
+        if (!_stateCheck() || (state == states.formulaFocus && mult==focusFormulaConfig.path.mult)) return;
+
         if (_isActive(mult)) {
             deleteActive(mult);
             event.stopPropagation();
@@ -146,7 +161,9 @@ function multiplierHandler(mult, elem) {
  * @param {HTMLElement} elem
  */
 function termHandler(term, elem) {
-    elem.addEventListener("click", (event) => {
+    _addHandler(elem, (event) => {
+        if (!_stateCheck()) return;
+
         if (event.clickDescription) {
             if (!_isActive(term, "term")) {
                 event.clickDescription.main = term;
@@ -174,7 +191,8 @@ function termHandler(term, elem) {
  * @param {HTMLElement} elem
  */
 function formulaHandler(formula, elem) {
-    elem.addEventListener("click", (event) => {
+    _addHandler(elem, (event) => {
+        if (!_stateCheck()) return;
         event.stopPropagation();
 
         if (!event.clickDescription) {

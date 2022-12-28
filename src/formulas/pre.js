@@ -15,8 +15,10 @@ let states = {
 /** @type {number} */
 let state = states.none;
 
-/** @type {Active} */
-let focusFormulaConfig;
+/**
+ * @callback EventHandlerFunc
+ * @type {{path:Active, handlers:Array<{target:HTMLElement, func: HandlerFunc}>}} */
+let focusFormulaConfig = null;
 
 /** @param {HTMLElement} elem */
 function insertContent(elem) {

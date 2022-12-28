@@ -1,10 +1,25 @@
+/**
+ * Wrap changed parts depending on the equality mode and focus mode
+ * @param {Block} newPart equlity part
+ * @param {Active} active
+ * @param {boolean} focused
+ * @return {Formula}
+ */
+function _wrapPart(newPart, active, focused=false) {
+    if (focused) {
+        newPart = active.formula.substituteMultiplier(active.mult, active.term, new Formula([newPart]));
+        return _wrapPart(newPart, active);
+    }
+    return active.formula.copyWithModifiedPart(newPart, active.term);
+}
+
 let formulaActions = [
     {
         buttonId: "separate-btn",
-        state: [states.formula],
         check() {
-            return (_getActiveType(activeFormulas[0].main) == _activeTypes.term ||
-                _getActiveType(activeFormulas[0].main) == _activeTypes.mult) && activeFormulas.length == 1;
+            return activeFormulas[0].formula.equalityParts.length >= 2 && activeFormulas.length == 1 &&
+                (_getActiveType(activeFormulas[0].main) == _activeTypes.term ||
+                _getActiveType(activeFormulas[0].main) == _activeTypes.mult);
         },
         async caller() {
             if (_getActiveType(activeFormulas[0].main) == _activeTypes.term) {
@@ -16,7 +31,6 @@ let formulaActions = [
     },
     {
         buttonId: "substitute-btn",
-        state: [states.formula, states.formulaFocus],
         check() {
             return activeFormulas.length == 2 && activeFormulas[0].main.isEqual(activeFormulas[1].main) &&
                 activeFormulas[0].formula.isSeparatedTerm(activeFormulas[0].term) &&
@@ -33,12 +47,13 @@ let formulaActions = [
                 newPart = activeFormulas[1].formula.substituteMultiplier(activeFormulas[1].main,
                     activeFormulas[1].term, activeFormulas[0].formula);
             }
-            return activeFormulas[1].formula.copyWithModifiedPart(newPart, activeFormulas[1].term);
+            let focused = (state == states.formulaFocus &&
+                activeFormulas[1].formula.equalityParts[0]==focusFormulaConfig.path.mult);
+            return _wrapPart(newPart, focused?focusFormulaConfig.path: activeFormulas[1], focused);
         },
     },
     {
         buttonId: "common-denominator-btn",
-        state: [states.formula, states.formulaFocus],
         check() {
             if (activeFormulas.length<2 || !activeFormulas.every((item) => item.main instanceof Term)) return false;
             let part = activeFormulas[0].formula._getActivePart(activeFormulas[0].main);
@@ -52,7 +67,6 @@ let formulaActions = [
     },
     {
         buttonId: "open-bracket-btn",
-        state: [states.formula, states.formulaFocus],
         check() {
             return activeFormulas.length == 1 && activeFormulas[0].main instanceof Block &&
                 activeFormulas[0].term.content.includes(activeFormulas[0].main);
@@ -64,7 +78,6 @@ let formulaActions = [
     },
     {
         buttonId: "out-bracket-btn",
-        state: [states.formula, states.formulaFocus],
         check() {
             if (activeFormulas.length<2 || !activeFormulas.every((item) => item.main instanceof Term)) return false;
             let part = activeFormulas[0].formula._getActivePart(activeFormulas[0].main);
@@ -81,7 +94,6 @@ let formulaActions = [
     },
     {
         buttonId: "multiply-btn",
-        state: [states.formula],
         check() {
             return _getActiveType(activeFormulas[0].main) == _activeTypes.formula && activeFormulas.length == 1;
         },
@@ -95,7 +107,6 @@ let formulaActions = [
     },
     {
         buttonId: "remove-eponent-btn",
-        state: [states.formula],
         check() {
             return activeFormulas.length==1 && activeFormulas[0].main instanceof Power &&
                 activeFormulas[0].formula.isSeparatedMultiplier(activeFormulas[0].main);
@@ -106,7 +117,6 @@ let formulaActions = [
     },
     {
         buttonId: "add-btn",
-        state: [states.formula],
         check() {
             return activeFormulas.every((item)=> _getActiveType(item.main) == _activeTypes.formula );
         },
@@ -116,7 +126,6 @@ let formulaActions = [
     },
     {
         buttonId: "substract-btn",
-        state: [states.formula],
         check() {
             return activeFormulas.length == 2 &&
                 activeFormulas.every((item)=>_getActiveType(item.main) == _activeTypes.formula);
@@ -127,7 +136,6 @@ let formulaActions = [
     },
     {
         buttonId: "devide-btn",
-        state: [states.formula],
         check() {
             return activeFormulas.length == 2 &&
                 activeFormulas.every((item)=> _getActiveType(item.main) == _activeTypes.formula );
