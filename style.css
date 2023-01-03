@@ -1,4 +1,4 @@
-.content-formula{
+.content-formula, .content-text{
     user-select: none; 
    -webkit-user-select: none; 
    -khtml-user-select: none; 
@@ -18,19 +18,29 @@
     background-color: blue;
 }
 
+.active-text{
+    background-color: green;
+}
+
 .mq-math-mode .mq-supsub {
     font-size: 75%;
     vertical-align: -0.5em;
 }
 
+.mq-math-mode {
+    border:1px solid #ced4da;
+}
+
 .in-formula{
+    padding: 10px 0;
     padding-right: 20px !important;
     font-size: 2em !important;
 }
 
-#header{
-    color: aliceblue;
+.content-text{
+    font-size: 1.5em;
 }
+
 .context-menu{
     position: fixed;
 }
@@ -38,10 +48,11 @@
     display: block;
 }
 .interactive{
-    min-height: 100px;
+    min-height: 500px;
     background-color: rgb(255, 255, 255);
+    overflow: auto;
 }
-.math-input{
+.math-input,.text-input{
     display: none;
     position:absolute;
     width: 100%;
@@ -52,6 +63,40 @@ body{
     background-color: aliceblue;
 }
 
+html, body{
+    height: 100%;
+}
+
 .in-function, .in-term, .in-equality-part{
     display: inline-block;
 }
+
+.input-form{
+    background-color: white;
+}
+.input-error{
+    color: #dc3545ed!important;
+    display: none;
+}
+
+#black-bg, #shot-box{
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 200;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.637);
+}
+
+ .d-flex{
+    width: 100%;
+    height: 100%;
+}
+
+#file-input {
+    opacity: 0;
+    position: absolute;
+    z-index: -1;
+ }

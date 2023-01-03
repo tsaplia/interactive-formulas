@@ -186,7 +186,7 @@ function powerFromTeX(itStr, base) {
         exponent = blockFromTeX(itStr);
         itStr.add();
     } else {
-        exponent = Block.wrap( isNaN(itStr.cur) ? new Num(itStr.cur) : new Variable(itStr.cur) );
+        exponent = Block.wrap( !isNaN(itStr.cur) ? new Num(itStr.cur) : new Variable(itStr.cur) );
         itStr.add();
     }
 
@@ -273,7 +273,7 @@ function primeFromTeX(itStr, base) {
     if (!(base instanceof Variable)) error();
 
     let primeCount = 0;
-    while (itStr.cur == "'") {
+    while (!itStr.finished() && itStr.cur == "'") {
         primeCount++;
         itStr.add();
     }
@@ -286,7 +286,7 @@ function primeFromTeX(itStr, base) {
  */
 function numFromTeX(itStr) {
     let start=itStr.it;
-    while (!itStr.finished() && !isNaN(itStr.cur)) itStr.add();
+    while (!itStr.finished() && (!isNaN(itStr.cur) || itStr.cur==".")) itStr.add();
     return new Num(itStr.str.slice(start, itStr.it));
 }
 

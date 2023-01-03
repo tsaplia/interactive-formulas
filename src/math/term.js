@@ -25,7 +25,7 @@ class Term {
 
     /** @return {Term} copy of term without copying multipliers*/
     copy() {
-        return new Term([...this.content], this.sign);
+        return new Term(this.content.map((mult) => mult.copy()), this.sign);
     }
 
     isEqual(other) {
@@ -91,6 +91,7 @@ class Term {
         }
 
         this.removeExtraBlocks();
+        if (this.getRatio()[0]==0) this.content = [new Num(0)];
     }
 
     _removeFractions() {

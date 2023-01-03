@@ -18,6 +18,13 @@ class MathStructure {
     toTex() {
         throw new Error("Abstract Method toTex has no implementation");
     }
+
+    /**
+     * @return {MathStructure}
+     */
+    copy() {
+        throw new Error("Abstract Method toTex has no implementation");
+    }
 }
 
 class Frac extends MathStructure {
@@ -84,11 +91,15 @@ class Sqrt extends MathStructure {
 
         return this.root.isEqual(other.root) && this.content.isEqual(other.content);
     }
+
+    copy() {
+        return new Sqrt(this.content.copy(), this.root.copy());
+    }
 }
 
 
 class Power extends MathStructure {
-    constructor(base, exponent = null) {
+    constructor(base, exponent) {
         super();
 
         /** @type {MathStructure} */
@@ -119,6 +130,10 @@ class Power extends MathStructure {
 
         return ((!this.exponent && !other.exponent) || this.exponent.isEqual(other.exponent)) &&
             this.base.isEqual(other.base);
+    }
+
+    copy() {
+        return new Power(this.base.copy(), this.exponent.copy());
     }
 
     /**
@@ -169,6 +184,10 @@ class Variable extends MathStructure {
 
         return this.name === other.name;
     }
+
+    copy() {
+        return new Variable(this.name, this.index, this.vector, this.primeCount);
+    }
 }
 
 
@@ -191,6 +210,10 @@ class Func extends MathStructure {
         if (!(other instanceof Func)) return false;
 
         return this.name === other.name && this.content.isEqual(other.content);
+    }
+
+    copy() {
+        return new Func(this.name, this.content.copy);
     }
 }
 
@@ -215,6 +238,10 @@ class Num extends MathStructure {
         if (!(other instanceof Num)) return false;
 
         return this.value === other.value;
+    }
+
+    copy() {
+        return new Num(this.value);
     }
 
     valueOf() {
