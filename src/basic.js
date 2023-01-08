@@ -7,8 +7,8 @@ const availibleLetters = [
 ];
 
 const availibleMathFunc = [
-    "sin", "cos", "tan", "ctg",
-    "arcsin", "arccos", "arctan", "arcctg",
+    "sin", "cos", "tan", "cot",
+    "arcsin", "arccos", "arctan"
 ];
 
 const interactiveFieldFunctions = {

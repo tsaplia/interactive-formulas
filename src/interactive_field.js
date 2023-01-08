@@ -71,7 +71,7 @@ function insertContent(TeX, elem, before) {
  * @param {HTMLElement} elem element fith formula to be deleted
  */
 function deleteContent(elem) {
-    delete contentTeX[contentTeX.findIndex((obj)=>obj.elem==elem)];
+    contentTeX.splice(contentTeX.findIndex((obj)=>obj.elem==elem), 1);
     deleteActiveAll();
     interactiveField.removeChild(elem);
 }

@@ -54,21 +54,21 @@
 <body>
     <div class="container-xl pt-2" style="position:relative;">
         <div class="toolbar">
+            <div class="btn-group mt-2" role="group">
+                <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    File
+                </button>
+                <ul class="dropdown-menu insert-dm">
+                    <li class="dropdown-item" id="open-file">
+                        <label for="file-input">Open</label>
+                        <input type="file" name="file-input" id="file-input" accept=".tex">
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li class="dropdown-item" id="save-image">Save as Image</li>
+                    <li class="dropdown-item" id="save-latex">Save as LaTeX</li>
+                </ul>
+            </div>
             <div class="btn-group tool-bow mt-2" role="group" >
-                <div class="btn-group" role="group">
-                    <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                        File
-                    </button>
-                    <ul class="dropdown-menu insert-dm">
-                        <li class="dropdown-item" id="open-file">
-                            <label for="file-input">Open</label>
-                            <input type="file" name="file-input" id="file-input" accept=".tex">
-                        </li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li class="dropdown-item" id="save-image">Save as Image</li>
-                        <li class="dropdown-item" id="save-latex">Save as LaTeX</li>
-                    </ul>
-                </div>
                 <div class="btn-group" role="group">
                     <button type="button" class="btn btn-primary dropdown-toggle insert-btn" data-bs-toggle="dropdown" aria-expanded="false">
                         Insert

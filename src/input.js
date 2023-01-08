@@ -6,8 +6,9 @@ let blackBG = document.querySelector("#black-bg");
 const mqConfig = {
     supSubsRequireOperand: true,
     maxDepth: 4,
+    autoOperatorNames:availibleMathFunc.join(" "),
     handlers: {
-        enter: function() {
+        enter() {
         },
     },
 };

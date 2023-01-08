@@ -21,12 +21,14 @@ function _wrapPart(newPart, active, focused=false) {
  * Insert formula to IF depanding on newPartMode
  * @param {Formula} formula
  * @param {HTMLElement} activeHTML rendered active elment
+ * @param {boolean} focused is modified formula focused
  */
-function _addFormula(formula, activeHTML) {
+function _addFormula(formula, activeHTML, focused=false) {
     if (newPartMode == newPartModes.newLine) {
         insertFormula(formula);
     } else {
         replaceFormula(formula, activeHTML);
+        if (focused) document.getElementById("focus-btn").click();
     }
 }
 
@@ -34,7 +36,7 @@ let formulaActions = [
     {
         buttonId: "separate-btn",
         check() {
-            return selected.formulas[0].formula.equalityParts.length >= 2 && selected.formulas.length == 1 &&
+            return selected.formulas.length == 1 && selected.formulas[0].formula.equalityParts.length >= 2 &&
                 (_getActiveType(selected.formulas[0]) == _activeTypes.term ||
                 _getActiveType(selected.formulas[0]) == _activeTypes.mult);
         },
@@ -68,7 +70,7 @@ let formulaActions = [
             let focused = (focusFormulaConfig &&
                  selected.formulas[1].formula.equalityParts[0]==focusFormulaConfig.path.mult);
             _addFormula(_wrapPart(newPart, focused?focusFormulaConfig.path: selected.formulas[1], focused),
-                selected.formulas[1].HTML);
+                selected.formulas[1].HTML, focused);
         },
     },
     {
@@ -86,7 +88,7 @@ let formulaActions = [
             let focused = (focusFormulaConfig &&
                 selected.formulas[0].formula.equalityParts[0]==focusFormulaConfig.path.mult);
             _addFormula(_wrapPart(newPart, focused?focusFormulaConfig.path: selected.formulas[0], focused),
-                selected.formulas[0].HTML);
+                selected.formulas[0].HTML, focused);
         },
     },
     {
@@ -106,7 +108,7 @@ let formulaActions = [
             let focused = (focusFormulaConfig &&
                 selected.formulas[0].formula.equalityParts[0]==focusFormulaConfig.path.mult);
             _addFormula(_wrapPart(newPart, focused?focusFormulaConfig.path: selected.formulas[0], focused),
-                selected.formulas[0].HTML);
+                selected.formulas[0].HTML, focused);
         },
     },
     {
@@ -127,13 +129,13 @@ let formulaActions = [
             let focused = (focusFormulaConfig &&
                 selected.formulas[0].formula.equalityParts[0]==focusFormulaConfig.path.mult);
             _addFormula(_wrapPart(newPart, focused?focusFormulaConfig.path: selected.formulas[0], focused),
-                selected.formulas[0].HTML);
+                selected.formulas[0].HTML, focused);
         },
     },
     {
         buttonId: "multiply-btn",
         check() {
-            return _getActiveType(selected.formulas[0]) == _activeTypes.formula && selected.formulas.length == 1;
+            return selected.formulas.length == 1 && _getActiveType(selected.formulas[0]) == _activeTypes.formula;
         },
         async caller() {
             let multFormula = await formulaInput();
@@ -156,7 +158,8 @@ let formulaActions = [
     {
         buttonId: "add-btn",
         check() {
-            return selected.formulas.every((item)=> _getActiveType(item) == _activeTypes.formula );
+            return selected.formulas.length>=2 &&
+                selected.formulas.every((item)=> _getActiveType(item) == _activeTypes.formula );
         },
         caller() {
             insertFormula(selected.formulas[0].main.add(...selected.formulas.slice(1).map((value) => value.main)));

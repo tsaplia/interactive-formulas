@@ -213,7 +213,7 @@ class Func extends MathStructure {
     }
 
     copy() {
-        return new Func(this.name, this.content.copy);
+        return new Func(this.name, this.content.copy());
     }
 }
 

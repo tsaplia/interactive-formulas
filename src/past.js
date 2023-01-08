@@ -26,7 +26,7 @@ document.querySelector(".insert-math-btn").addEventListener("click", ()=>{
 
 for (let action of formulaActions) {
     document.querySelector(`#${action.buttonId}`).addEventListener("click", async ()=>{
-        if (state!=state.FORMULA || !action.check()) return;
+        if ((state!=state.FORMULA && state!=state.NONE) || !action.check()) return;
         action.caller();
     });
 }

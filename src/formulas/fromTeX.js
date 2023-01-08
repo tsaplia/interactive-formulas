@@ -49,12 +49,24 @@ function error(text=null) {
     throw new Error(text || "Incorrect input string");
 }
 
+/**
+ * Removes all \operatorname and \text
+ * @param {string} str 
+ */
+function _deleteExtraBlocks(str){
+    let regex = /(\\operatorname|\\text){([^\\]*)}/g
+    for(let match of str.matchAll(regex)){
+        str = str.replace(match[0],'\\'+match[2]);
+    }
+    return str;
+}
 
 /**
  * @param {string} str
  * @return {Formula}
  */
 function formulaFromTeX(str) {
+    str = _deleteExtraBlocks(str);
     let equalityParts = [];
     let itStr = new IterStr(str);
 
@@ -304,7 +316,7 @@ function specialNameFromTeX(itStr) {
     for (let name of availibleMathFunc) {
         if (!itStr.startsWith(name)) continue;
         itStr.add(name.length);
-        return new Func(name, multiplierFromTex(itStr));
+        return new Func(name, blockFromTeX(itStr, true));
     }
     error();
 }

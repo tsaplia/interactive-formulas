@@ -31,6 +31,7 @@ function textHandler(elem, text) {
  * @return {boolean}
  */
 function checkText(text) {
+    if(!text) return false;
     let elem = document.createElement("div");
     elem.innerHTML = text;
     MathJax.typeset([elem]);
