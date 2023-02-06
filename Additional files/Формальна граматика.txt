@@ -1,0 +1,17 @@
+<formula>::= <expr>=<formula> | <expr>   
+<expr>::= <term><expr> | <term>           
+<term>::= +<mult-group> | -<mult-group>          
+<mult-group>::= <mult>*<mult-group> | <mult><mult-group> | <mult> 
+<mult>::= <fraction> | <function> | <number> | <sqrt> | <exponent> | <variable> | <vector> (<expr>) 
+<fraction>::= \frac{<expr>}{<expr>}
+<fraction>::= \<functionName>(<expr>)
+<functionName>::= \sin | \cos | \tan | \ctg | \arcsin | \arccos | \arctan | \arcctg
+<number>::= <integer> | <integer>.<integer>
+<integer> ::= <digit> | <digit><integer>
+<sqrt>::= \sqrt{<expr>} | \sqrt[<expr>]{<expr>}
+<exponent>::= <mult>^{<expr>}
+<vector>::= \vec{<variable>}
+<variable>::= <var-name><sub><primes> 
+<primes>::= '<primes> | <empty>
+<sub>::= _{<expr>} | <empty>
+<var-name>::= <latin> | <greek>

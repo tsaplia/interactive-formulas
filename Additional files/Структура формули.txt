@@ -1,0 +1,37 @@
+Formula{
+    equalityParts: Expr[]
+}
+Expr{
+    content: Term[]
+}
+Term{
+    sign: "+"|"-"
+    content: Mult[]
+}
+Fraction{
+    numerator: Term
+    denomenator: Term
+}
+Function{
+    name: string
+    Content: Block
+}
+Number{
+    value: number 
+}
+Sqrt{
+    root: Block
+    content: Mult
+}
+Exponent{
+    exponent: Block
+    base: Mult
+}
+Variable{
+    name: string
+    index: string
+    vector: bool
+    primeCount: number;
+}
+    
+
