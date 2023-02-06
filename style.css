@@ -101,3 +101,35 @@ html, body{
     position: absolute;
     z-index: -1;
  }
+
+ 
+ .item{
+    font-size: 1.2em;
+    height: 50px;
+    line-height: 50px;
+    margin: 1px;
+    text-align: center;
+    padding: 0;
+}
+#keyboard-box{
+    display: none;
+    background-color: #fff;
+    width: 100%;
+    position: fixed;
+    bottom: 0;
+    left:0;
+    z-index: 500;
+    box-shadow: 0 -.5rem 1rem rgba(0,0,0,.15)
+}
+#keyboard-box hr{
+    margin: 0.75rem 0;
+}
+.row>.row{
+    margin:0px;
+    flex-wrap: nowrap;
+    flex: 0 0 auto,
+}
+.MathJax{
+    display: inline-block !important;
+    margin: 0 !important;
+}

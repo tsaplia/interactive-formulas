@@ -51,12 +51,13 @@ function error(text=null) {
 
 /**
  * Removes all \operatorname and \text
- * @param {string} str 
+ * @param {string} str
+ * @return {string}
  */
-function _deleteExtraBlocks(str){
-    let regex = /(\\operatorname|\\text){([^\\]*)}/g
-    for(let match of str.matchAll(regex)){
-        str = str.replace(match[0],'\\'+match[2]);
+function _deleteExtraBlocks(str) {
+    let regex = /(\\operatorname|\\text){([^\\]*)}/g;
+    for (let match of str.matchAll(regex)) {
+        str = str.replace(match[0], "\\"+match[2]);
     }
     return str;
 }

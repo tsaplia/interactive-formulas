@@ -3,15 +3,14 @@ let textInputBox = document.querySelector(".text-input");
 let textInputArea = document.querySelector(".text-input-area");
 let blackBG = document.querySelector("#black-bg");
 
+let currentInput = null;
+
 const mqConfig = {
     supSubsRequireOperand: true,
     maxDepth: 4,
-    autoOperatorNames:availibleMathFunc.join(" "),
-    handlers: {
-        enter() {
-        },
-    },
+    autoOperatorNames: availibleMathFunc.join(" "),
 };
+
 const formulaInputField = MQ.MathField(document.querySelector("#mq-math-field"), mqConfig);
 const mathInputField = MQ.MathField(document.querySelector("#mq-text-field"), mqConfig);
 
@@ -31,6 +30,8 @@ function _removeInput(inputBox) {
     blackBG.style.display = "none";
     state.disable = false;
     inputBox.querySelector("small").style.display = "none";
+    kbBox.style.display = "none";
+    currentInput=null;
 }
 
 function _getFormulaInput() {
@@ -42,6 +43,7 @@ function _getFormulaInput() {
 }
 
 async function formulaInput(defaultTeX="") {
+    currentInput = formulaInputField;
     _prepareInput(formulaInputBox);
     formulaInputField.latex(defaultTeX);
     formulaInputField.focus();
@@ -70,6 +72,7 @@ function _getTextInput() {
 }
 
 async function textInput(defaultTeX="") {
+    currentInput = mathInputField;
     _prepareInput(textInputBox);
     textInputArea.value = defaultTeX;
     textInputArea.focus();
@@ -84,4 +87,5 @@ async function textInput(defaultTeX="") {
 
     return text;
 }
+
 

@@ -7,6 +7,7 @@
     <title>Interactive formulas</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.css"/> 
     <link rel="stylesheet" href="style.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
@@ -39,9 +40,7 @@
     <script>
         let MQ = MathQuill.getInterface(2);
     </script>
-    <script src="https://kit.fontawesome.com/80f9fef578.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.0.0-rc.5/dist/html2canvas.min.js"></script>
-
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <script src="src/basic.js"></script>
     <script src="src/math/structure.js"></script>
     <script src="src/math/block.js"></script>
@@ -116,16 +115,12 @@
                     <i class="bi bi-repeat"></i>
                 </label>
             </div>
-            <button class="col-auto btn btn-outline-light">
-                <i class="fa-solid fa-keyboard " style="color: grey;"></i> 
-            </button>
         </div>
         <div class="row justify-content-center math-input mt-4" >
             <div class="col-md-8 col-sm-10 pt-2 pb-4 input-form rounded shadow-sm">
                 <label for="mq-math-field" class="form-label">Enter math</label>
                 <div class="input-group ">
-                    <span class="form-control" id="mq-math-field">
-                    </span>
+                    <span id="mq-math-field" class="form-control"></span>
                     <button class="btn btn-primary formula-ready" type="button">Ready</button>
                 </div>
                 <small id="math-input-error" class="form-text text-muted input-error">Invalid text. Please check ...</small>
@@ -159,9 +154,10 @@
         </ul>
         
     </div>
-    <div id="black-bg"></div>
+    <div id="black-bg">
+    </div>
     <div id="shot-box" class="py-5">
-		<div class=" d-flex flex-column justify-content-center align-items-center">
+		<div class=" d-flex flex-column align-items-center">
 			<div id="screenshot"></div>
             <div class="text-center">
                 <button id="save-shot" class="btn btn-primary">Save it</button>
@@ -169,6 +165,28 @@
             </div>
 		</div>
 	</div>
+    <div id="keyboard-box" class="py-2 rounded">
+		<div style="max-width: 850px; margin: 0 auto;">
+			<div class="navbar">
+                <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
+                    <input type="radio" class="btn-check" name="btnradio" id="main-kb" autocomplete="off" checked>
+                    <label class="btn btn-outline-secondary" for="main-kb">123</label>
+                  
+                    <input type="radio" class="btn-check" name="btnradio" id="greek-kb" autocomplete="off">
+                    <label class="btn btn-outline-secondary" for="greek-kb">$$\alpha\beta\gamma$$</label>
+                  
+                    <input type="radio" class="btn-check" name="btnradio" id="latin-kb" autocomplete="off">
+                    <label class="btn btn-outline-secondary" for="latin-kb">abc</label>
+                </div>
+                <button class="btn btn-light btn-close" id="close-keyboard"> </button>
+            </div>
+			<hr>
+			<div id="keyboard">
+			</div>
+		</div>
+	</div>
+        
+    </div>
     <script>
         const menuArea = document.querySelector(".interactive");
         const menu = document.querySelector(".context-menu");
@@ -191,9 +209,10 @@
 
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3" crossorigin="anonymous"></script>
-    
     <script src="src/interactive_field.js"></script>
     <script src="src/input.js"></script>
+    <script src="src/keyboard_markup.js"></script>
+    <script src="src/keyboard.js"></script>
     <script src="src/active.js"></script>
     <script src="src/texts.js"></script>
     <script src="src/formulas/active_formulas.js"></script>

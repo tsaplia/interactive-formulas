@@ -1,25 +1,13 @@
 const availibleLetters = [
-    "Delta", "alpha", "beta", "gamma", "delta", "zeta",
-    "eta", "theta", "iota", "kappa", "lambda", "mu",
-    "nu", "pi", "rho", "sigma", "tau", "upsilon",
-    "chi", "varepsilon", "vartheta", "varphi",
-    "infin",
+    "alpha", "nu", "beta", "xi", "Xi", "gamma", "Gamma", "delta", "Delta", "pi", "Pi", "epsilon", "rho", "varrho",
+    "zeta", "sigma", "Sigma", "eta", "tau", "theta", "Theta", "upsilon", "Upsilon", "iota", "phi", "Phi", "kappa",
+    "chi", "lambda", "Lambda", "psi", "Psi", "mu", "omega", "Omega",
 ];
 
 const availibleMathFunc = [
     "sin", "cos", "tan", "cot",
-    "arcsin", "arccos", "arctan"
+    "arcsin", "arccos", "arctan",
 ];
-
-const interactiveFieldFunctions = {
-    t: "separateTerm",
-    m: "separateMultiplier",
-    o: "openBrackets",
-    u: "substitute",
-    a: "addEquations",
-    s: "subtractEquations",
-    d: "divideEquations",
-};
 
 /**
  * @param {number} a
